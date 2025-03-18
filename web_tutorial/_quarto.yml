@@ -1,0 +1,32 @@
+project:
+  type: website
+website:
+  title: "Introduction to nextflow"
+  navbar:
+    background: primary
+    search: true
+    left: 
+      - text: "Introduction"
+        href: 1_intro.qmd
+      - text: "Channels"
+        href: 2_channels.qmd
+      - text: "Process"
+        href: 3_process.qmd
+      - text: "nf-core"
+        href: 4_nf-core.qmd                
+  page-footer:
+    left: |
+      ![](kuzman_consulting_logo.jpg){fig-alt="Kuzman Consulting" width=265px}
+    right: |
+      ![](ngschool-logo.svg){fig-alt="NGSchool" width=165px}
+    background: light
+lightbox: true
+format:
+  html:
+    toc: true
+    toc-title: "Table of contents"
+    code-fold: true
+    theme: flatly
+    embed-resources: true
+output: 
+  html: default
