@@ -1,0 +1,58 @@
+/* Style all code blocks with a box */
+pre {
+    background: #f8f9fa;  /* Light gray background */
+    border-left: 5px solid #FA6061; /* accent on the left */
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1);
+    font-size: 14px;
+    overflow-x: auto;
+}
+
+/* Style inline code (e.g., `code` inside text) */
+code {
+    background: #eef;
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-size: 90%;
+}
+/* Highlight comments */
+pre code span.comment {
+    color: #7f848e; /* Gray for comments */
+    font-style: italic;
+}
+
+/* Highlight keywords (process, script, input, output) */
+pre code span.keyword {
+    color: #c678dd; /* Purple for keywords */
+    font-weight: bold;
+}
+
+/* Highlight variables and parameters */
+pre code span.variable {
+    color: #e5c07b; /* Yellow */
+}
+
+/* Highlight strings */
+pre code span.string {
+    color: #98c379; /* Green */
+}
+
+/* Highlight Nextflow channels */
+pre code span.channel {
+    color: #61afef; /* Blue */
+    font-weight: bold;
+}
+
+/* Highlight Nextflow directives */
+pre code span.directive {
+    color: #e06c75; /* Red */
+    font-weight: bold;
+}
+
+/* Style process blocks */
+pre code span.process {
+    color: #d19a66; /* Orange */
+    font-weight: bold;
+}
+

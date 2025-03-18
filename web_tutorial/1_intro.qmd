@@ -2,6 +2,30 @@
 title: "Introduction"  
 ---
 
-## This is intro slide  
+## Hello world script 
 
-Something is written here. Nice!  
+## Processes and Channels
+
+Nextflow workflow is made by joining together different processes. Each process can be written in any scripting language that can be executed by the Linux platform (Bash, Perl, Ruby, Python, etc.).
+
+![](images/clipboard-1373747047.png)
+
+Processes are executed independently and are isolated from each other. The only way they can communicate is via "channels", asynchronous first-in, first-out (FIFO) queues. In other words, every input and output of a process is represented as a channel. The interaction between these processes, and ultimately the workflow execution flow itself, is implicitly defined by these input and output declarations.
+
+```{r, eval=FALSE}
+
+#!/usr/bin/env nextflow
+
+params.greeting = 'Hello world!' #| This sets a greeting message
+greeting_ch = Channel.of(params.greeting) #| Creates a Nextflow channel from the greeting
+
+process SPLITLETTERS {
+    input:
+    val x #| Takes a single input value
+
+    script:
+    """
+    echo $x | fold -w1
+    """
+}
+```

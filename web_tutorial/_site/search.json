@@ -4,7 +4,7 @@
     "href": "1_intro.html",
     "title": "Introduction",
     "section": "",
-    "text": "Something is written here. Nice!",
+    "text": "Nextflow workflow is made by joining together different processes. Each process can be written in any scripting language that can be executed by the Linux platform (Bash, Perl, Ruby, Python, etc.).\n\nProcesses are executed independently and are isolated from each other. The only way they can communicate is via “channels”, asynchronous first-in, first-out (FIFO) queues. In other words, every input and output of a process is represented as a channel. The interaction between these processes, and ultimately the workflow execution flow itself, is implicitly defined by these input and output declarations.\n\n\nCode\n#!/usr/bin/env nextflow\n\nparams.greeting = 'Hello world!' #| This sets a greeting message\ngreeting_ch = Channel.of(params.greeting) #| Creates a Nextflow channel from the greeting\n\nprocess SPLITLETTERS {\n    input:\n    val x #| Takes a single input value\n\n    script:\n    \"\"\"\n    echo $x | fold -w1\n    \"\"\"\n}\n\n\n#!/usr/bin/env nextflow\n\nparams.greeting = 'Hello world!' #| This sets a greeting message\ngreeting_ch = Channel.of(params.greeting) #| Creates a Nextflow channel from the greeting\n\nprocess SPLITLETTERS {\n    input:\n    val x #| Takes a single input value\n\n    script:\n    \"\"\"\n    echo $x | fold -w1\n    \"\"\"\n}",
     "crumbs": [
       "Introduction"
     ]
@@ -15,6 +15,26 @@
     "title": "Introduction",
     "section": "",
     "text": "Something is written here. Nice!",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "1_intro.html#processes-and-channels.",
+    "href": "1_intro.html#processes-and-channels.",
+    "title": "Introduction",
+    "section": "",
+    "text": "In practice, a Nextflow workflow is made by joining together different processes. Each process can be written in any scripting language that can be executed by the Linux platform (Bash, Perl, Ruby, Python, etc.).\nProcesses are executed independently and are isolated from each other, i.e., they do not share a common (writable) state. The only way they can communicate is via asynchronous first-in, first-out (FIFO) queues, called channels. In other words, every input and output of a process is represented as a channel. The interaction between these processes, and ultimately the workflow execution flow itself, is implicitly defined by these input and output declarations.\n#!/usr/bin/env nextflow\n\nparams.greeting = 'Hello world!' #| This sets a greeting message\ngreeting_ch = Channel.of(params.greeting) #| Creates a Nextflow channel from the greeting\n\nprocess SPLITLETTERS {\n    input:\n    val x #| Takes a single input value\n\n    script:\n    \"\"\"\n    echo $x | fold -w1\n    \"\"\"\n}",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "1_intro.html#processes-and-channels",
+    "href": "1_intro.html#processes-and-channels",
+    "title": "Introduction",
+    "section": "Processes and Channels",
+    "text": "Processes and Channels\nNextflow workflow is made by joining together different processes. Each process can be written in any scripting language that can be executed by the Linux platform (Bash, Perl, Ruby, Python, etc.).\n\nProcesses are executed independently and are isolated from each other. The only way they can communicate is via “channels”, asynchronous first-in, first-out (FIFO) queues. In other words, every input and output of a process is represented as a channel. The interaction between these processes, and ultimately the workflow execution flow itself, is implicitly defined by these input and output declarations.\n\n\nCode\n#!/usr/bin/env nextflow\n\nparams.greeting = 'Hello world!' #| This sets a greeting message\ngreeting_ch = Channel.of(params.greeting) #| Creates a Nextflow channel from the greeting\n\nprocess SPLITLETTERS {\n    input:\n    val x #| Takes a single input value\n\n    script:\n    \"\"\"\n    echo $x | fold -w1\n    \"\"\"\n}",
     "crumbs": [
       "Introduction"
     ]

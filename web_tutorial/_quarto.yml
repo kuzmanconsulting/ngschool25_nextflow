@@ -16,21 +16,24 @@ website:
         text: Process
       - href: 4_nf-core.qmd
         text: nf-core
-        
   page-navigation: true
   page-footer:
     left: |
-      ![](kuzman_consulting_logo.jpg){fig-alt="Kuzman Consulting" width=180px}
+      [![](logo_transparent_background.jpeg){fig-alt="Kuzman Consulting" width=220px}](https://www.kuzmanconsulting.com)
     right: |
       ![](ngschool-logo.svg){fig-alt="NGSchool" width=150px}
     background: light
 lightbox: true
 format:
   html:
+    code-copy: true  # Enables the "Copy" button on all code blocks
+    code-overflow: wrap  # Prevents horizontal scrolling
     toc: true
     toc-title: "Table of contents"
     code-fold: true
     theme: flatly
     embed-resources: true
+    css: styles.css  # Link the custom CSS file
+#    include-after-body: nextflow-highlighting.js
 output: 
   html: default
