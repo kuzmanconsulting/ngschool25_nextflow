@@ -2,7 +2,87 @@
 title: "Introduction"  
 ---
 
-## Hello world script 
+## Nextflow training materials
+
+::: callout-tip
+There is a great community around nextflow, and tons of training material exist for all levels of experience with it. This workshop is heavily based on materials provided in those courses, assembled to my personal preferences. I sincerely encourage you to learn nextflow on your own using the materials available on the [official nextflow training website](https://training.nextflow.io/latest/ "Nextflow community training portal").
+:::
+
+## Learning objectives
+
+By the end of this workshop you should be able to:
+
+-    Write a simple Nextflow **workflow**
+
+-   Have basic understanding of the concepts of **Channels**, **Processes** and **Operators**
+
+-   Run an test nf-core pipeline
+
+-   Know where to go next 🤷
+
+## The problem
+
+Lets say we want to do the following, as I am sure you have done many times before:
+
+We will start with fastq data and perform quality/adapter trimming, after which we will perform fastqc.
+
+![](images/clipboard-1893698979.png)
+
+In bash we would do this:
+
+```{bash, eval=FALSE}
+
+bbduk infile.fastq.gz -o infile.trimmed.fastq.gz
+fastqc infile.tirimmed.fastq.gz -o fastqc_report
+```
+
+If we wanted to do this on multiple files we could write a bash script:
+
+```{bash, eval=FALSE}
+bbduk ${infile} -o ${infile%%fastq.gz}.trimmed.fastq.gz
+fastqc ${infile%%fastq.gz}.trimmed.fastq.gz -o fastqc_report
+```
+
+Lets try to run it on our 4 samples:
+
+...
+
+![](images/clipboard-375543568.png)
+
+## My first nextflow script
+
+``` nextflow
+nextflow.enable.dsl=2
+
+
+workflow {
+  
+  // parse input:
+	infile = params.infile
+  infile_channel = Channel.fromList( infile )
+  
+  // run FASTQC:
+  FASTQC(infile_1_channel, infile_2_channel)
+
+}
+
+
+process FASTQC {
+	
+	label 'fastqc'
+	
+	input:
+    path infilename
+
+	output:
+    path '*' 
+  		
+	shell:
+  '''
+  fastqc !{infilename}  
+  '''
+}
+```
 
 ## Processes and Channels
 

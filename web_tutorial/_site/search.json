@@ -4,7 +4,7 @@
     "href": "1_intro.html",
     "title": "Introduction",
     "section": "",
-    "text": "Nextflow workflow is made by joining together different processes. Each process can be written in any scripting language that can be executed by the Linux platform (Bash, Perl, Ruby, Python, etc.).\n\nProcesses are executed independently and are isolated from each other. The only way they can communicate is via “channels”, asynchronous first-in, first-out (FIFO) queues. In other words, every input and output of a process is represented as a channel. The interaction between these processes, and ultimately the workflow execution flow itself, is implicitly defined by these input and output declarations.\n\n\nCode\n#!/usr/bin/env nextflow\n\nparams.greeting = 'Hello world!' #| This sets a greeting message\ngreeting_ch = Channel.of(params.greeting) #| Creates a Nextflow channel from the greeting\n\nprocess SPLITLETTERS {\n    input:\n    val x #| Takes a single input value\n\n    script:\n    \"\"\"\n    echo $x | fold -w1\n    \"\"\"\n}\n\n\n#!/usr/bin/env nextflow\n\nparams.greeting = 'Hello world!' #| This sets a greeting message\ngreeting_ch = Channel.of(params.greeting) #| Creates a Nextflow channel from the greeting\n\nprocess SPLITLETTERS {\n    input:\n    val x #| Takes a single input value\n\n    script:\n    \"\"\"\n    echo $x | fold -w1\n    \"\"\"\n}",
+    "text": "Tip\n\n\n\nThere is a great community around nextflow, and tons of training material exist for all levels of experience with it. This workshop is heavily based on materials provided in those courses, assembled to my personal preferences. I sincerely encourage you to learn nextflow on your own using the materials available on the official nextflow training website.",
     "crumbs": [
       "Introduction"
     ]
@@ -35,6 +35,56 @@
     "title": "Introduction",
     "section": "Processes and Channels",
     "text": "Processes and Channels\nNextflow workflow is made by joining together different processes. Each process can be written in any scripting language that can be executed by the Linux platform (Bash, Perl, Ruby, Python, etc.).\n\nProcesses are executed independently and are isolated from each other. The only way they can communicate is via “channels”, asynchronous first-in, first-out (FIFO) queues. In other words, every input and output of a process is represented as a channel. The interaction between these processes, and ultimately the workflow execution flow itself, is implicitly defined by these input and output declarations.\n\n\nCode\n#!/usr/bin/env nextflow\n\nparams.greeting = 'Hello world!' #| This sets a greeting message\ngreeting_ch = Channel.of(params.greeting) #| Creates a Nextflow channel from the greeting\n\nprocess SPLITLETTERS {\n    input:\n    val x #| Takes a single input value\n\n    script:\n    \"\"\"\n    echo $x | fold -w1\n    \"\"\"\n}",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "1_intro.html#my-first-nextflow-script",
+    "href": "1_intro.html#my-first-nextflow-script",
+    "title": "Introduction",
+    "section": "My first nextflow script",
+    "text": "My first nextflow script\nnextflow.enable.dsl=2\n\n\nworkflow {\n  \n  // parse input:\n    infile = params.infile\n  infile_channel = Channel.fromList( infile )\n  \n  // run FASTQC:\n  FASTQC(infile_1_channel, infile_2_channel)\n\n}\n\n\nprocess FASTQC {\n    \n    label 'fastqc'\n    \n    input:\n    path infilename\n\n    output:\n    path '*' \n        \n    shell:\n  '''\n  fastqc !{infilename}  \n  '''\n}",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "1_intro.html#nextflow-training-materials",
+    "href": "1_intro.html#nextflow-training-materials",
+    "title": "Introduction",
+    "section": "",
+    "text": "Tip\n\n\n\nThere is a great community around nextflow, and tons of training material exist for all levels of experience with it. This workshop is heavily based on materials provided in those courses, assembled to my personal preferences. I sincerely encourage you to learn nextflow on your own using the materials available on the official nextflow training website.",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "1_intro.html#learning-objectives",
+    "href": "1_intro.html#learning-objectives",
+    "title": "Introduction",
+    "section": "Learning objectives",
+    "text": "Learning objectives\nBy the end of this workshop you should be able to:\n\nWrite a simple Nextflow workflow\nHave basic understanding of the concepts of Channels, Processes and Operators\nRun an test nf-core pipeline\nKnow where to go next 🤷",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "1_intro.html#learning-objectives-1",
+    "href": "1_intro.html#learning-objectives-1",
+    "title": "Introduction",
+    "section": "Learning objectives¶",
+    "text": "Learning objectives¶\nBy the end of this workshop you should be able to:\n\nWrite a simple Nextflow workflow\nDescribe the Nextflow concepts of Channels, Processes and Operators\nHave an understanding of containerized workflows\nUnderstand the different execution platforms supported by Nextflow\nDescribe the Nextflow community and ecosystem",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "1_intro.html#the-problem",
+    "href": "1_intro.html#the-problem",
+    "title": "Introduction",
+    "section": "The problem",
+    "text": "The problem\nLets say we want to do the following, as I am sure you have done many times before:\nWe will start with fastq data and perform quality/adapter trimming, after which we will perform fastqc.\n\nIn bash we would do this:\n\n\nCode\n\nbbduk infile.fastq.gz -o infile.trimmed.fastq.gz\nfastqc infile.tirimmed.fastq.gz -o fastqc_report\n\n\nIf we wanted to do this on multiple files we could write a bash script:\n\n\nCode\nbbduk ${infile} -o ${infile%%fastq.gz}.trimmed.fastq.gz\nfastqc ${infile%%fastq.gz}.trimmed.fastq.gz -o fastqc_report\n\n\nLets try to run it on our 4 samples:\n…",
     "crumbs": [
       "Introduction"
     ]
