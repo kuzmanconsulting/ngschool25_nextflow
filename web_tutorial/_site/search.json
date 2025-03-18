@@ -4,13 +4,19 @@
     "href": "1_intro.html",
     "title": "Introduction",
     "section": "",
-    "text": "Something is written here. Nice!"
+    "text": "Something is written here. Nice!",
+    "crumbs": [
+      "Introduction"
+    ]
   },
   {
     "objectID": "1_intro.html#this-is-intro-slide",
     "href": "1_intro.html#this-is-intro-slide",
     "title": "Introduction",
     "section": "",
-    "text": "Something is written here. Nice!"
+    "text": "Something is written here. Nice!",
+    "crumbs": [
+      "Introduction"
+    ]
   }
 ]
