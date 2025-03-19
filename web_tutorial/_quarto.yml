@@ -30,10 +30,11 @@ format:
     code-overflow: wrap  # Prevents horizontal scrolling
     toc: true
     toc-title: "Table of contents"
-    code-fold: true
+    code-fold: false
     theme: flatly
+#    include-after-body: nextflow-highlighting.js
     embed-resources: true
     css: styles.css  # Link the custom CSS file
-#    include-after-body: nextflow-highlighting.js
+
 output: 
   html: default

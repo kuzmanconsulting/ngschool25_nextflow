@@ -12,7 +12,7 @@ There is a great community around nextflow, and tons of training material exist 
 
 By the end of this workshop you should be able to:
 
--    Write a simple Nextflow **workflow**
+-   Write a simple Nextflow **workflow**
 
 -   Have basic understanding of the concepts of **Channels**, **Processes** and **Operators**
 
@@ -24,23 +24,67 @@ By the end of this workshop you should be able to:
 
 Lets say we want to do the following, as I am sure you have done many times before:
 
-We will start with fastq data and perform quality/adapter trimming, after which we will perform fastqc.
+We will start with fastq data and perform trimming, after which we will perform fastqc.
 
 ![](images/clipboard-1893698979.png)
 
+### Solution - bash
+
 In bash we would do this:
 
-```{bash, eval=FALSE}
+``` {code-fold="false"}
+fastp --in1 liver_1.fq \
+      --in2 liver_2.fq \
+      --out1 liver_1.trimmed.fq \
+      --out2 liver_2.trimmed.fq \
+      -h liver.html 
 
-bbduk infile.fastq.gz -o infile.trimmed.fastq.gz
-fastqc infile.tirimmed.fastq.gz -o fastqc_report
+fastqc liver_1.fq
+fastqc liver_1.trimmed.fq
 ```
 
-If we wanted to do this on multiple files we could write a bash script:
+But of course, it will fail since we do not have fastp and fastqc installed.
+
+::: callout-tip
+Good practice is to use containers which will enable reproducibility. Building dockerfiles and images is sometimes tricky, but also could be defying the purpose of reproducible research. You can find many already available dockers/singularity images at [dockerhub](https://hub.docker.com/r/biocontainers/) and [quay.io](https://quay.io) .
+:::
+
+### Use containers!
+
+We will use the docker for fastp and fastqc available on dockerhub:
+
+First; pull the container locally:
 
 ```{bash, eval=FALSE}
-bbduk ${infile} -o ${infile%%fastq.gz}.trimmed.fastq.gz
-fastqc ${infile%%fastq.gz}.trimmed.fastq.gz -o fastqc_report
+docker pull biocontainers/fastqc:v0.11.9_cv8
+```
+
+Next, enter the container image:
+
+```{bash, eval=FALSE}
+docker run -v .:/data -it biocontainers/fastqc:v0.11.9_cv8
+```
+
+#### Explanation
+
++----------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| command                          | explained                                                                                                                                                                                                                                                                                                          |
++==================================+====================================================================================================================================================================================================================================================================================================================+
+| docker run                       | This is the basic Docker command used to create and start a new container from a specified image.                                                                                                                                                                                                                  |
++----------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| -v .:/data                       | This flag mounts a volume. Here, the current directory (represented by .) on your host machine is mapped to the /data directory inside the container. This means any files in your current directory will be accessible in /data within the container, and changes made there will be reflected back on your host. |
++----------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| -i (interactive)                 | Keeps STDIN open so you can interact with the container.                                                                                                                                                                                                                                                           |
++----------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| -t (tty)                         | Allocates a pseudo-TTY, which provides a terminal session inside the container.\                                                                                                                                                                                                                                   |
+|                                  | Together, they allow you to run the container in interactive mode, making it easier to execute commands and see outputs.                                                                                                                                                                                           |
++----------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| biocontainers/fastqc:v0.11.9_cv8 | This is the Docker image being used. It specifies: image and tag.                                                                                                                                                                                                                                                  |
++----------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+: If we wanted to do this on multiple files we could write a bash script:
+
+```{bash, eval=FALSE}
 ```
 
 Lets try to run it on our 4 samples:
@@ -52,13 +96,14 @@ Lets try to run it on our 4 samples:
 ## My first nextflow script
 
 ``` nextflow
+
 nextflow.enable.dsl=2
 
 
 workflow {
   
   // parse input:
-	infile = params.infile
+    infile = params.infile
   infile_channel = Channel.fromList( infile )
   
   // run FASTQC:
@@ -68,16 +113,16 @@ workflow {
 
 
 process FASTQC {
-	
-	label 'fastqc'
-	
-	input:
+    
+    label 'fastqc'
+    
+    input:
     path infilename
 
-	output:
+    output:
     path '*' 
-  		
-	shell:
+        
+    shell:
   '''
   fastqc !{infilename}  
   '''
