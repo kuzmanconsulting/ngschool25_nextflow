@@ -1,2 +1,0 @@
-WARNING: The requested image's platform (linux/amd64) does not match the detected host platform (linux/arm64/v8) and no specific platform was requested
-/Users/majakuzman/Documents/ngschool25_nextflow/web_tutorial/tests/work/10/31c2a272d709fc659892965693e8fa/.command.sh: line 2: infilename: unbound variable

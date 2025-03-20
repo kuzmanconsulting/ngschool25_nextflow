@@ -1,3 +1,182 @@
 ---
-title: "Channels"  
+title: "Nextflow intro"  
 ---
+
+# Solution - nextflow style
+
+Nextflow takes care of all of those problems for us. It is both an workflow orchestrator and a coding language.
+
+::: {.callout-note appearance="simple"}
+## key terms
+
+**workflow**: pipeline in nextflow is called a workflow
+
+**channel**: structure which transfers data between steps in the pipeline
+
+**process**: task that will happen on data
+:::
+
+## Processes and Channels
+
+Nextflow workflow is made by joining together different processes. Each process can be written in any scripting language that can be executed by the Linux platform (Bash, Perl, Ruby, Python, etc.).
+
+![](images/clipboard-1373747047.png)
+
+Processes are executed independently and are isolated from each other. The only way they can communicate is via "channels", asynchronous first-in, first-out (FIFO) queues. In other words, every input and output of a process is represented as a channel. The interaction between these processes, and ultimately the workflow execution flow itself, is implicitly defined by these input and output declarations.
+
+## My first nextflow script
+
+[First nextflow script](code/my_first_script.nf)
+
+```{r}
+mkdir tests
+cd tests
+
+nextflow run ../code/my_first_script.nf \
+   -c ../code/config.nf 
+```
+
+::: {.callout-note appearance="minimal"}
+### Explanation:
+
+**`nextflow run code/my_first_script.nf`** runs a nextflow script code/my_first_script.nf\
+**`-c config.nf`** uses configuration file for nextflow run. Parameters which are nextflow-related are handed with a single dash.
+:::
+
+## Script walkthrough
+
+```{nextflow}
+nextflow.enable.dsl=2 # (Domain-Specific Language version 2)
+
+process FASTQC {
+    
+  container 'biocontainers/fastqc:v0.11.9_cv8'
+
+  input:
+  path infilename
+
+  output:
+  path '*' 
+      
+  script:
+  """
+  fastqc ${infilename}  
+  """
+}
+
+workflow {
+
+  // parse input:
+  infile_channel = Channel.fromPath( "../../data/liver_1.fq" )
+
+  // run FASTQC:
+  FASTQC(infile_channel)
+
+}
+
+```
+
+Of course, there is no need to hard code inputs to a channel. Some usual options for defining inputs can be:
+
+To view a content of a channel, you can use method view() For example, we created code/script1.nf where we only created a channel from a file. To view it, just add .view() after a channel.
+
+```{nextflow}
+# code/script1.nf
+workflow {
+
+  // parse input:
+  infile_channel_1 = 
+    Channel.fromPath( "../../data/liver_*.fq" )
+    .view()
+
+}
+
+```
+
+We did this in [script1](code/script1.nf) . So lets run it and see what we get:
+
+```{r}
+nextflow run ../code/script1.nf    -c ../code/config.nf 
+```
+
+::: callout-exercise
+## 💡 Exercise: task2
+
+What will happen if you try to run the previous script with "../../data/liver\_\*.fq" instead of "../../data/liver_1.fq" also add infile_channel.view() . Try to run it yourself!
+:::
+
+```{bash, eval=FALSE, task2}
+cp ../code/my_first_script.nf ../code/script2.nf
+# change ../code/script2.nf and run it.
+# 1. change 
+# add .view() to view output of the channel!
+
+nextflow run ../code/script2.nf  -c ../code/config.nf 
+
+```
+
+Solution:
+
+```{bash, eval=FALSE, solution-task2}
+#| code-fold: true
+
+
+cp ../code/my_first_script.nf ../code/script2.nf
+# change ../code/script2.nf and run it.
+sed  -i 's|../../data/liver_1.fq" )|../../data/liver_*.fq" ).view()|g' ../code/script2.nf
+
+nextflow run ../code/script2.nf  -c ../code/config.nf 
+```
+
+Now fastqc is ran 2 times!
+
+::: callout-tip
+There are many ways to create a channel in nextflow, I advise you to look at [the official documentation on channel factories](https://www.nextflow.io/docs/latest/reference/channel.html#channel-factory) for more information.
+:::
+
+PROCESS::
+
+```{bash}
+
+  tag "${infilename}"
+
+```
+
+You can view the content of a channel.
+
+TODO
+
+show view
+
+explain input from file pairs
+
+## Exercise: add a trimming step
+
+docker run -v .:/data -it biocontainers/fastp:v0.20.1_cv1 fastp\
+--in1 data/liver_1.fq\
+--in2 data/liver_2.fq\
+--out1 data/liver_1.trimmed.fq\
+--out2 data/liver_2.trimmed.fq\
+-h liver.html
+
+```{bash}
+
+process FASTP {
+    
+  container 'biocontainers/fastp:v0.20.1_cv1'
+
+  input:
+  path infilename
+
+  output:
+  path '*' 
+      
+  script:
+  """
+  fastp \
+    --in1 ${infilename} 
+    --out1 liver_1.trimmed.fq \
+    -h liver.html 
+  """
+}
+```

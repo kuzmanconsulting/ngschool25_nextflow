@@ -2,9 +2,9 @@
   {
     "objectID": "1_intro.html",
     "href": "1_intro.html",
-    "title": "Introduction",
+    "title": "bash and containers",
     "section": "",
-    "text": "Tip\n\n\n\nThere is a great community around nextflow, and tons of training material exist for all levels of experience with it. This workshop is heavily based on materials provided in those courses, assembled to my personal preferences. I sincerely encourage you to learn nextflow on your own using the materials available on the official nextflow training website.",
+    "text": "By the end of this workshop you should be able to:\n\nsee the advantages of Nextflow over bash\nWrite a simple Nextflow workflow\nHave basic understanding of the concepts of Channels, Processes and Operators\nRun an test nf-core pipeline\nKnow where to go next 🤷",
     "crumbs": [
       "Introduction"
     ]
@@ -87,6 +87,226 @@
     "text": "The problem\nLets say we want to do the following, as I am sure you have done many times before:\nWe will start with fastq data and perform trimming, after which we will perform fastqc.\n\n\nSolution - bash\nIn bash we would do this:\nfastp --in1 liver_1.fq \\\n      --in2 liver_2.fq \\\n      --out1 liver_1.trimmed.fq \\\n      --out2 liver_2.trimmed.fq \\\n      -h liver.html \n\nfastqc liver_1.fq\nfastqc liver_1.trimmed.fq\nBut of course, it will fail since we do not have fastp and fastqc installed.\n\n\n\n\n\n\nTip\n\n\n\nGood practice is to use containers which will enable reproducibility. Building dockerfiles and images is sometimes tricky, but also could be defying the purpose of reproducible research. You can find many already available dockers/singularity images at dockerhub and quay.io .\n\n\n\n\nUse containers!\nWe will use the docker for fastp and fastqc available on dockerhub:\nFirst; pull the container locally:\n\ndocker pull biocontainers/fastqc:v0.11.9_cv8\n\nNext, enter the container image:\n\ndocker run -v .:/data -it biocontainers/fastqc:v0.11.9_cv8\n\n\nExplanation\n\nIf we wanted to do this on multiple files we could write a bash script:\n\n\n\n\n\n\ncommand\nexplained\n\n\n\n\ndocker run\nThis is the basic Docker command used to create and start a new container from a specified image.\n\n\n-v .:/data\nThis flag mounts a volume. Here, the current directory (represented by .) on your host machine is mapped to the /data directory inside the container. This means any files in your current directory will be accessible in /data within the container, and changes made there will be reflected back on your host.\n\n\n-i (interactive)\nKeeps STDIN open so you can interact with the container.\n\n\n-t (tty)\nAllocates a pseudo-TTY, which provides a terminal session inside the container.\nTogether, they allow you to run the container in interactive mode, making it easier to execute commands and see outputs.\n\n\nbiocontainers/fastqc:v0.11.9_cv8\nThis is the Docker image being used. It specifies: image and tag.\n\n\n\n\n\n\nLets try to run it on our 4 samples:\n…",
     "crumbs": [
       "Introduction"
+    ]
+  },
+  {
+    "objectID": "1_intro.html#solution---bash",
+    "href": "1_intro.html#solution---bash",
+    "title": "bash and containers",
+    "section": "Solution - bash",
+    "text": "Solution - bash\nIn bash we would do this:\n\nfastp \n\nBut of course, it will fail since we do not have fastp and fastqc installed.\n\n\n\n\n\n\nTip\n\n\n\nGood practice is to use containers which will enable reproducibility. Building dockerfiles and images is sometimes tricky, but also could be defying the purpose of reproducible research. You can find many already available dockers/singularity images at dockerhub and quay.io .",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "1_intro.html#use-containers",
+    "href": "1_intro.html#use-containers",
+    "title": "bash and containers",
+    "section": "Use containers!",
+    "text": "Use containers!\nWe will use the docker for fastp and fastqc available on dockerhub.\nFirst; pull the container locally:\n\ndocker pull biocontainers/fastp:v0.20.1_cv1\n\nNext, enter the container image:\n\ndocker run -v .:/data -it biocontainers/fastp:v0.20.1_cv1 /bin/bash\n\n# exit the container with exit\n\n\n\n\n\n\n\nExplanation\ndocker run start a new container from a specified image.\n-v .:/data mounts a volume. Here, the current directory (represented by .) on your host machine is mapped to the /data directory inside the container.\n-i (interactive) t (tty) provides a terminal session inside the container.\nTogether, they allow you to run the container in interactive mode, making it easier to execute commands and see outputs.\nbiocontainers/fastp:v0.20.1_cv1 docker being used. image:tag.\n/bin/bash which command to run within a docker.\n\n\n\nOnce you entered the container image, the fastp program exists and we all have the same version. Moreover, we all are running it on the same version of the OS. Check:\n\ncat /etc/os-release\nfastp --version\n\nNAME=\"Ubuntu\" VERSION=\"16.04.6 LTS (Xenial Xerus)\"\\\nID=ubuntu\\\nID_LIKE=debian\\\nPRETTY_NAME=\"Ubuntu 16.04.6 LTS\"\\\nVERSION_ID=\"16.04\"\\\nHOME_URL=\"http://www.ubuntu.com/\"\\\nSUPPORT_URL=\"http://help.ubuntu.com/\"\\\nBUG_REPORT_URL=\"http://bugs.launchpad.net/ubuntu/\"\\\nVERSION_CODENAME=xenial\\\nUBUNTU_CODENAME=xenial\n\nfastp 0.20.1",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "1_intro.html#bash-with-containers",
+    "href": "1_intro.html#bash-with-containers",
+    "title": "Introduction",
+    "section": "bash with containers",
+    "text": "bash with containers\nSo, lets combine bash command for fastp and container:\n\ndocker run -v .:/data -it biocontainers/fastp:v0.20.1_cv1 fastp \\\n      --in1 data/liver_1.fq \\\n      --in2 data/liver_2.fq \\\n      --out1 data/liver_1.trimmed.fq \\\n      --out2 data/liver_2.trimmed.fq \\\n      -h liver.html",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "1_intro.html#exercise",
+    "href": "1_intro.html#exercise",
+    "title": "Introduction",
+    "section": "💡 Exercise:",
+    "text": "💡 Exercise:\nTry it yourself! Rewrite the fastqc part to use the appropriate container biocontainers/fastqc:v0.11.9_cv8 on data/liver_1.fq :",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "1_intro.html#exercise-task1",
+    "href": "1_intro.html#exercise-task1",
+    "title": "bash and containers",
+    "section": "💡 Exercise: task1",
+    "text": "💡 Exercise: task1\nTry it yourself! 1. Pull the container biocontainers/fastqc:v0.11.9_cv8 2. Use the fastqc on data/liver_1.fq",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "1_intro.html#bash-command-with-containers",
+    "href": "1_intro.html#bash-command-with-containers",
+    "title": "bash and containers",
+    "section": "bash command with containers",
+    "text": "bash command with containers\nSo, lets combine bash command for fastp and container:\n\ndocker run -v .:/data -it biocontainers/fastp:v0.20.1_cv1 fastp \\\n      --in1 data/liver_1.fq \\\n      --in2 data/liver_2.fq \\\n      --out1 data/liver_1.trimmed.fq \\\n      --out2 data/liver_2.trimmed.fq \\\n      -h liver.html",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "2_channels.html",
+    "href": "2_channels.html",
+    "title": "Nextflow intro",
+    "section": "",
+    "text": "Nextflow takes care of all of those problems for us. It is both an workflow orchestrator and a coding language.\n\n\n\n\n\n\nkey terms\n\n\n\nworkflow: pipeline in nextflow is called a workflow\nchannel: structure which transfers data between steps in the pipeline\nprocess: task that will happen on data\n\n\n\n\nNextflow workflow is made by joining together different processes. Each process can be written in any scripting language that can be executed by the Linux platform (Bash, Perl, Ruby, Python, etc.).\n\nProcesses are executed independently and are isolated from each other. The only way they can communicate is via “channels”, asynchronous first-in, first-out (FIFO) queues. In other words, every input and output of a process is represented as a channel. The interaction between these processes, and ultimately the workflow execution flow itself, is implicitly defined by these input and output declarations.\n\n\n\nFirst nextflow script\n\nmkdir tests\ncd tests\n\nnextflow run ../code/my_first_script.nf \\\n   -c ../code/config.nf \n\n\n\n\n\n\n\nExplanation:\n\n\n\nnextflow run code/my_first_script.nf runs a nextflow script code/my_first_script.nf\n-c config.nf uses configuration file for nextflow run. Parameters which are nextflow-related are handed with a single dash.\n\n\n\n\n\n\nnextflow.enable.dsl=2 # (Domain-Specific Language version 2)\n\nprocess FASTQC {\n    \n  container 'biocontainers/fastqc:v0.11.9_cv8'\n\n  input:\n  path infilename\n\n  output:\n  path '*' \n      \n  script:\n  \"\"\"\n  fastqc ${infilename}  \n  \"\"\"\n}\n\nworkflow {\n\n  // parse input:\n  infile_channel = Channel.fromPath( \"../../data/liver_1.fq\" )\n\n  // run FASTQC:\n  FASTQC(infile_channel)\n\n}\n\n\nOf course, there is no need to hard code inputs to a channel. Some usual options for defining inputs can be:\nTo view a content of a channel, you can use method view() For example, we created code/script1.nf where we only created a channel from a file. To view it, just add .view() after a channel.\n\n# code/script1.nf\nworkflow {\n\n  // parse input:\n  infile_channel_1 = \n    Channel.fromPath( \"../../data/liver_*.fq\" )\n    .view()\n\n}\n\n\nWe did this in script1 . So lets run it and see what we get:\n\nnextflow run ../code/script1.nf    -c ../code/config.nf \n\n\n\n\nWhat will happen if you try to run the previous script with “../../data/liver_*.fq” instead of “../../data/liver_1.fq” also add infile_channel.view() . Try to run it yourself!\n\n\ncp ../code/my_first_script.nf ../code/script2.nf\n# change ../code/script2.nf and run it.\n# 1. change \n# add .view() to view output of the channel!\n\nnextflow run ../code/script2.nf  -c ../code/config.nf \n\nSolution:\n\n\nCode\n\ncp ../code/my_first_script.nf ../code/script2.nf\n# change ../code/script2.nf and run it.\nsed  -i 's|../../data/liver_1.fq\" )|../../data/liver_*.fq\" ).view()|g' ../code/script2.nf\n\nnextflow run ../code/script2.nf  -c ../code/config.nf \n\n\nNow fastqc is ran 2 times!\n\n\n\n\n\n\nTip\n\n\n\nThere are many ways to create a channel in nextflow, I advise you to look at the official documentation on channel factories for more information.\n\n\nPROCESS::\n\n\n  tag \"${infilename}\"\n\nYou can view the content of a channel.\nTODO\nshow view\nexplain input from file pairs\n\n\ndocker run -v .:/data -it biocontainers/fastp:v0.20.1_cv1 fastp\n–in1 data/liver_1.fq\n–in2 data/liver_2.fq\n–out1 data/liver_1.trimmed.fq\n–out2 data/liver_2.trimmed.fq\n-h liver.html\n\n\nprocess FASTP {\n    \n  container 'biocontainers/fastp:v0.20.1_cv1'\n\n  input:\n  path infilename\n\n  output:\n  path '*' \n      \n  script:\n  \"\"\"\n  fastp \\\n    --in1 ${infilename} \n    --out1 liver_1.trimmed.fq \\\n    -h liver.html \n  \"\"\"\n}",
+    "crumbs": [
+      "Channels"
+    ]
+  },
+  {
+    "objectID": "2_channels.html#my-first-nextflow-script",
+    "href": "2_channels.html#my-first-nextflow-script",
+    "title": "Nextflow intro",
+    "section": "",
+    "text": "First nextflow script\n\nmkdir tests\ncd tests\n\nnextflow run ../code/my_first_script.nf \\\n   -c ../code/config.nf \n\n\n\n\n\n\n\nExplanation:\n\n\n\nnextflow run code/my_first_script.nf runs a nextflow script code/my_first_script.nf\n-c config.nf uses configuration file for nextflow run. Parameters which are nextflow-related are handed with a single dash.",
+    "crumbs": [
+      "Channels"
+    ]
+  },
+  {
+    "objectID": "2_channels.html#processes-and-channels",
+    "href": "2_channels.html#processes-and-channels",
+    "title": "Nextflow intro",
+    "section": "",
+    "text": "Nextflow workflow is made by joining together different processes. Each process can be written in any scripting language that can be executed by the Linux platform (Bash, Perl, Ruby, Python, etc.).\n\nProcesses are executed independently and are isolated from each other. The only way they can communicate is via “channels”, asynchronous first-in, first-out (FIFO) queues. In other words, every input and output of a process is represented as a channel. The interaction between these processes, and ultimately the workflow execution flow itself, is implicitly defined by these input and output declarations.",
+    "crumbs": [
+      "Channels"
+    ]
+  },
+  {
+    "objectID": "2_channels.html#nextflow-training-materials",
+    "href": "2_channels.html#nextflow-training-materials",
+    "title": "Nextflow intro",
+    "section": "",
+    "text": "Tip\n\n\n\nThere is a great community around nextflow, and tons of training material exist for all levels of experience with it. This workshop is heavily based on materials provided in those courses, assembled to my personal preferences. I sincerely encourage you to learn nextflow on your own using the materials available on the official nextflow training website.",
+    "crumbs": [
+      "Channels"
+    ]
+  },
+  {
+    "objectID": "1_intro.html#memory-threads",
+    "href": "1_intro.html#memory-threads",
+    "title": "bash and containers",
+    "section": "memory, threads",
+    "text": "memory, threads\nIf we want to allocate different amount of memory and CPUs to each of the processes we make, we need to create separate bash scripts for each process, and define the threads and memory separately.",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "1_intro.html#project-dependencies",
+    "href": "1_intro.html#project-dependencies",
+    "title": "bash and containers",
+    "section": "project dependencies",
+    "text": "project dependencies\nNext, we need to define dependencies - we will have to wait for one script to finish and then the other one can start running. This will depend on where we run the scripts - if we run it locally in bash, we can use wait; if we run it in slurm/pbs/torque, we need to take care of dependencies ourselves.",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "1_intro.html#upscaling-to-production-level",
+    "href": "1_intro.html#upscaling-to-production-level",
+    "title": "bash and containers",
+    "section": "upscaling to production level",
+    "text": "upscaling to production level\nThe additional problems arise when you want to go to production-level, and run this pipeline on thousands of samples. You will want to use the cloud for this, and will need to implement the pipeline to work on the cloud.",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "1_intro.html#parallelism",
+    "href": "1_intro.html#parallelism",
+    "title": "bash and containers",
+    "section": "parallelism",
+    "text": "parallelism\nWe need to take care of writing the bash “pipeline” to enable paralel execution. Also we need to take care of running the scripts in parallel on multiple samples.",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "1_intro.html#resume",
+    "href": "1_intro.html#resume",
+    "title": "bash and containers",
+    "section": "resume",
+    "text": "resume\nWe need to take care of status of each of the runs. If some sample fails in one step, we need to find it manually to understand what and where failed.\nWe need to resume the execution of the pipeline manually when some step fails in some sample.",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "1_intro.html#documentation",
+    "href": "1_intro.html#documentation",
+    "title": "bash and containers",
+    "section": "documentation",
+    "text": "documentation\nWe need to take care of the documentation. What samples were ran? How do we know if they all ran as expected? With which version of the code were they run? We need to keep track of that manually.",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "1_intro.html#output-locations",
+    "href": "1_intro.html#output-locations",
+    "title": "bash and containers",
+    "section": "output locations",
+    "text": "output locations\nWe need to take care of where the outputs will be located.",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "1_intro.html#logging",
+    "href": "1_intro.html#logging",
+    "title": "bash and containers",
+    "section": "logging",
+    "text": "logging\nWe need to manually create logs if we want to know what happened.",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "1_intro.html#process-dependencies",
+    "href": "1_intro.html#process-dependencies",
+    "title": "bash and containers",
+    "section": "process dependencies",
+    "text": "process dependencies\nNext, we need to define dependencies - we will have to wait for one script to finish and then the other one can start running. This will depend on where we run the scripts - if we run it locally in bash, we can use wait; if we run it in slurm/pbs/torque, we need to take care of dependencies ourselves.",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "2_channels.html#script-walkthrough",
+    "href": "2_channels.html#script-walkthrough",
+    "title": "Nextflow intro",
+    "section": "",
+    "text": "nextflow.enable.dsl=2 # (Domain-Specific Language version 2)\n\nprocess FASTQC {\n    \n  container 'biocontainers/fastqc:v0.11.9_cv8'\n\n  input:\n  path infilename\n\n  output:\n  path '*' \n      \n  script:\n  \"\"\"\n  fastqc ${infilename}  \n  \"\"\"\n}\n\nworkflow {\n\n  // parse input:\n  infile_channel = Channel.fromPath( \"../../data/liver_1.fq\" )\n\n  // run FASTQC:\n  FASTQC(infile_channel)\n\n}\n\n\nOf course, there is no need to hard code inputs to a channel. Some usual options for defining inputs can be:\nTo view a content of a channel, you can use method view() For example, we created code/script1.nf where we only created a channel from a file. To view it, just add .view() after a channel.\n\n# code/script1.nf\nworkflow {\n\n  // parse input:\n  infile_channel_1 = \n    Channel.fromPath( \"../../data/liver_*.fq\" )\n    .view()\n\n}\n\n\nWe did this in script1 . So lets run it and see what we get:\n\nnextflow run ../code/script1.nf    -c ../code/config.nf",
+    "crumbs": [
+      "Channels"
+    ]
+  },
+  {
+    "objectID": "2_channels.html#exercise-add-a-trimming-step",
+    "href": "2_channels.html#exercise-add-a-trimming-step",
+    "title": "Nextflow intro",
+    "section": "",
+    "text": "docker run -v .:/data -it biocontainers/fastp:v0.20.1_cv1 fastp\n–in1 data/liver_1.fq\n–in2 data/liver_2.fq\n–out1 data/liver_1.trimmed.fq\n–out2 data/liver_2.trimmed.fq\n-h liver.html\n\n\nprocess FASTP {\n    \n  container 'biocontainers/fastp:v0.20.1_cv1'\n\n  input:\n  path infilename\n\n  output:\n  path '*' \n      \n  script:\n  \"\"\"\n  fastp \\\n    --in1 ${infilename} \n    --out1 liver_1.trimmed.fq \\\n    -h liver.html \n  \"\"\"\n}",
+    "crumbs": [
+      "Channels"
+    ]
+  },
+  {
+    "objectID": "2_channels.html#exercise-task2",
+    "href": "2_channels.html#exercise-task2",
+    "title": "Nextflow intro",
+    "section": "",
+    "text": "What will happen if you try to run the previous script with “../../data/liver_*.fq” instead of “../../data/liver_1.fq” also add infile_channel.view() . Try to run it yourself!",
+    "crumbs": [
+      "Channels"
     ]
   }
 ]

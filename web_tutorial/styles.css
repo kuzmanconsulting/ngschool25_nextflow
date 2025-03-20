@@ -56,3 +56,11 @@ pre code span.process {
     font-weight: bold;
 }
 
+.callout-exercise {
+    border-left: 4px solid #c09ae4; /* A light blue color */
+    background-color: #f4e7fa; /* Light blue background */
+    padding-top: 0.0mm;
+    padding-bottom: 1mm;
+    padding-left: 5mm;
+    border-radius: 5px;
+}

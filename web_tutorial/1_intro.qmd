@@ -1,26 +1,18 @@
 ---
-title: "Introduction"  
+title: "bash and containers"  
 ---
 
-## Nextflow training materials
-
-::: callout-tip
-There is a great community around nextflow, and tons of training material exist for all levels of experience with it. This workshop is heavily based on materials provided in those courses, assembled to my personal preferences. I sincerely encourage you to learn nextflow on your own using the materials available on the [official nextflow training website](https://training.nextflow.io/latest/ "Nextflow community training portal").
-:::
-
-## Learning objectives
+# Learning objectives
 
 By the end of this workshop you should be able to:
 
+-   see the advantages of Nextflow over bash
 -   Write a simple Nextflow **workflow**
-
 -   Have basic understanding of the concepts of **Channels**, **Processes** and **Operators**
-
 -   Run an test nf-core pipeline
-
 -   Know where to go next 🤷
 
-## The problem
+# The problem
 
 Lets say we want to do the following, as I am sure you have done many times before:
 
@@ -28,19 +20,11 @@ We will start with fastq data and perform trimming, after which we will perform 
 
 ![](images/clipboard-1893698979.png)
 
-### Solution - bash
+## Solution - bash
 
 In bash we would do this:
-
-``` {code-fold="false"}
-fastp --in1 liver_1.fq \
-      --in2 liver_2.fq \
-      --out1 liver_1.trimmed.fq \
-      --out2 liver_2.trimmed.fq \
-      -h liver.html 
-
-fastqc liver_1.fq
-fastqc liver_1.trimmed.fq
+```{bash}
+fastp 
 ```
 
 But of course, it will fail since we do not have fastp and fastqc installed.
@@ -49,108 +33,166 @@ But of course, it will fail since we do not have fastp and fastqc installed.
 Good practice is to use containers which will enable reproducibility. Building dockerfiles and images is sometimes tricky, but also could be defying the purpose of reproducible research. You can find many already available dockers/singularity images at [dockerhub](https://hub.docker.com/r/biocontainers/) and [quay.io](https://quay.io) .
 :::
 
-### Use containers!
+## Use containers!
 
-We will use the docker for fastp and fastqc available on dockerhub:
+We will use the docker for fastp and fastqc available on dockerhub.
 
 First; pull the container locally:
 
-```{bash, eval=FALSE}
-docker pull biocontainers/fastqc:v0.11.9_cv8
+```{r}
+docker pull biocontainers/fastp:v0.20.1_cv1
 ```
 
 Next, enter the container image:
 
-```{bash, eval=FALSE}
-docker run -v .:/data -it biocontainers/fastqc:v0.11.9_cv8
+```{r}  
+
+docker run -v .:/data -it biocontainers/fastp:v0.20.1_cv1 /bin/bash
+
+# exit the container with exit
 ```
 
-#### Explanation
+::: {.callout-note appearance="minimal"}
+Explanation
 
-+----------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| command                          | explained                                                                                                                                                                                                                                                                                                          |
-+==================================+====================================================================================================================================================================================================================================================================================================================+
-| docker run                       | This is the basic Docker command used to create and start a new container from a specified image.                                                                                                                                                                                                                  |
-+----------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| -v .:/data                       | This flag mounts a volume. Here, the current directory (represented by .) on your host machine is mapped to the /data directory inside the container. This means any files in your current directory will be accessible in /data within the container, and changes made there will be reflected back on your host. |
-+----------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| -i (interactive)                 | Keeps STDIN open so you can interact with the container.                                                                                                                                                                                                                                                           |
-+----------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| -t (tty)                         | Allocates a pseudo-TTY, which provides a terminal session inside the container.\                                                                                                                                                                                                                                   |
-|                                  | Together, they allow you to run the container in interactive mode, making it easier to execute commands and see outputs.                                                                                                                                                                                           |
-+----------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| biocontainers/fastqc:v0.11.9_cv8 | This is the Docker image being used. It specifies: image and tag.                                                                                                                                                                                                                                                  |
-+----------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+**`docker run`** start a new container from a specified image.
 
-: If we wanted to do this on multiple files we could write a bash script:
+**`-v .:/data`** mounts a volume. Here, the current directory (represented by .) on your host machine is mapped to the /data directory inside the container.
+
+**`-i (interactive) t (tty)`** provides a terminal session inside the container.\
+Together, they allow you to run the container in interactive mode, making it easier to execute commands and see outputs.
+
+**`biocontainers/fastp:v0.20.1_cv1`** docker being used. image:tag.
+
+**`/bin/bash`** which command to run within a docker.
+:::
+
+Once you entered the container image, the fastp program exists and we all have the same version. Moreover, we all are running it on the same version of the OS. Check:
 
 ```{bash, eval=FALSE}
+cat /etc/os-release
+fastp --version
 ```
 
-Lets try to run it on our 4 samples:
+```         
+NAME="Ubuntu" VERSION="16.04.6 LTS (Xenial Xerus)"\
+ID=ubuntu\
+ID_LIKE=debian\
+PRETTY_NAME="Ubuntu 16.04.6 LTS"\
+VERSION_ID="16.04"\
+HOME_URL="http://www.ubuntu.com/"\
+SUPPORT_URL="http://help.ubuntu.com/"\
+BUG_REPORT_URL="http://bugs.launchpad.net/ubuntu/"\
+VERSION_CODENAME=xenial\
+UBUNTU_CODENAME=xenial
 
+fastp 0.20.1
+```
+
+## bash command with containers
+
+So, lets combine bash command for fastp and container:
+
+```{bash, eval=FALSE}
+docker run -v .:/data -it biocontainers/fastp:v0.20.1_cv1 fastp \
+      --in1 data/liver_1.fq \
+      --in2 data/liver_2.fq \
+      --out1 data/liver_1.trimmed.fq \
+      --out2 data/liver_2.trimmed.fq \
+      -h liver.html 
+
+```
+
+::: callout-exercise
+## 💡 Exercise: task1
+
+Try it yourself! 1. Pull the container biocontainers/fastqc:v0.11.9_cv8 2. Use the fastqc on data/liver_1.fq
+:::
+
+```{bash, eval=FALSE, task1}
+
+#pull the container  
 ...
 
-![](images/clipboard-375543568.png)
+# run the command:  
+docker run -v .:/data -it ... ...
 
-## My first nextflow script
-
-``` nextflow
-
-nextflow.enable.dsl=2
-
-
-workflow {
-  
-  // parse input:
-    infile = params.infile
-  infile_channel = Channel.fromList( infile )
-  
-  // run FASTQC:
-  FASTQC(infile_1_channel, infile_2_channel)
-
-}
-
-
-process FASTQC {
-    
-    label 'fastqc'
-    
-    input:
-    path infilename
-
-    output:
-    path '*' 
-        
-    shell:
-  '''
-  fastqc !{infilename}  
-  '''
-}
 ```
 
-## Processes and Channels
+Solution:
 
-Nextflow workflow is made by joining together different processes. Each process can be written in any scripting language that can be executed by the Linux platform (Bash, Perl, Ruby, Python, etc.).
+```{bash, eval=FALSE, solution-task1}
+#| code-fold: true
 
-![](images/clipboard-1373747047.png)
-
-Processes are executed independently and are isolated from each other. The only way they can communicate is via "channels", asynchronous first-in, first-out (FIFO) queues. In other words, every input and output of a process is represented as a channel. The interaction between these processes, and ultimately the workflow execution flow itself, is implicitly defined by these input and output declarations.
-
-```{r, eval=FALSE}
-
-#!/usr/bin/env nextflow
-
-params.greeting = 'Hello world!' #| This sets a greeting message
-greeting_ch = Channel.of(params.greeting) #| Creates a Nextflow channel from the greeting
-
-process SPLITLETTERS {
-    input:
-    val x #| Takes a single input value
-
-    script:
-    """
-    echo $x | fold -w1
-    """
-}
+docker pull biocontainers/fastqc:v0.11.9_cv8
+docker run -v .:/data -it biocontainers/fastqc:v0.11.9_cv8 fastqc data/liver_1.fq 
 ```
+
+# bash scripts as a pipeline
+
+In theory, we can create a bash 'pipeline' - script to process each sample with both steps.  
+
+```{bash, eval=FALSE}
+#| code-fold: true
+
+# we are in the ngschool25_nextflow/web_tutorial directory
+
+cd .. #to ngschool25_nextflow
+docker run -v .:/data -it biocontainers/fastp:v0.20.1_cv1 fastp \
+      --in1 data/liver_1.fq \
+      --in2 data/liver_2.fq \
+      --out1 data/liver_1.trimmed.fq \
+      --out2 data/liver_2.trimmed.fq \
+      -h liver.html 
+
+docker run -v .:/data -it biocontainers/fastqc:v0.11.9_cv8 fastqc data/liver_1.fq 
+```
+
+So the script would look something like this:  
+
+[full_code.sh](full_code.sh)
+
+Run it on liver samples:  
+
+``` {bash}
+# move to the ngschool25_nextflow directory
+# if cou run from the web_tutorial directory, the container will mount the wrong folder to the volume...  
+
+# if needed change permission to run:
+chmod +x code/full_code.sh
+code/full_code.sh ../data/liver_1.fq ../data/liver_1.fq 
+```
+
+## output locations 
+
+We need to take care of where the outputs will be located.  
+
+## logging  
+
+We need to manually create logs if we want to know what happened. 
+
+## memory, threads
+
+ If we want to allocate different amount of memory and CPUs to each of the processes we make, we need to create separate bash scripts for each process, and define the threads and memory separately.
+
+## process dependencies  
+
+Next, we need to define dependencies - we will have to wait for one script to finish and then the other one can start running. This will depend on where we run the scripts - if we run it locally in bash, we can use wait; if we run it in slurm/pbs/torque, we need to take care of dependencies ourselves.
+
+## parallelism  
+
+We need to take care of writing the bash "pipeline" to enable paralel execution. Also we need to take care of running the scripts in parallel on multiple samples. 
+
+## resume  
+
+We need to take care of status of each of the runs. If some sample fails in one step, we need to find it manually to understand what and where failed. 
+
+We need to resume the execution of the pipeline manually when some step fails in some sample.  
+
+## upscaling to production level
+
+The additional problems arise when you want to go to production-level, and run this pipeline on thousands of samples. You will want to use the cloud for this, and will need to implement the pipeline to work on the cloud.
+
+## documentation  
+
+We need to take care of the documentation. What samples were ran? How do we know if they all ran as expected?  With which version of the code were they run? We need to keep track of that manually.  

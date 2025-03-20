@@ -1,0 +1,61 @@
+Mar-20 15:39:57.639 [main] DEBUG nextflow.cli.Launcher - $> nextflow run my_first_script.nf --infile ../data/liver_1.fq -c config.nf
+Mar-20 15:39:57.680 [main] DEBUG nextflow.cli.CmdRun - N E X T F L O W  ~  version 24.10.5
+Mar-20 15:39:57.689 [main] DEBUG nextflow.plugin.PluginsFacade - Setting up plugin manager > mode=prod; embedded=false; plugins-dir=/Users/majakuzman/.nextflow/plugins; core-plugins: nf-amazon@2.9.2,nf-azure@1.10.2,nf-cloudcache@0.4.2,nf-codecommit@0.2.2,nf-console@1.1.4,nf-google@1.15.4,nf-tower@1.9.3,nf-wave@1.7.4
+Mar-20 15:39:57.700 [main] INFO  o.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+Mar-20 15:39:57.701 [main] INFO  o.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+Mar-20 15:39:57.702 [main] INFO  org.pf4j.DefaultPluginManager - PF4J version 3.12.0 in 'deployment' mode
+Mar-20 15:39:57.708 [main] INFO  org.pf4j.AbstractPluginManager - No plugins
+Mar-20 15:39:57.718 [main] DEBUG nextflow.config.ConfigBuilder - User config file: /Users/majakuzman/Documents/ngschool25_nextflow/code/config.nf
+Mar-20 15:39:57.719 [main] DEBUG nextflow.config.ConfigBuilder - Parsing config file: /Users/majakuzman/Documents/ngschool25_nextflow/code/config.nf
+Mar-20 15:39:57.730 [main] DEBUG n.secret.LocalSecretsProvider - Secrets store: /Users/majakuzman/.nextflow/secrets/store.json
+Mar-20 15:39:57.732 [main] DEBUG nextflow.secret.SecretsLoader - Discovered secrets providers: [nextflow.secret.LocalSecretsProvider@3e7dfd44] - activable => nextflow.secret.LocalSecretsProvider@3e7dfd44
+Mar-20 15:39:57.737 [main] DEBUG nextflow.config.ConfigBuilder - Applying config profile: `standard`
+Mar-20 15:39:57.915 [main] DEBUG nextflow.cli.CmdRun - Applied DSL=2 from script declaration
+Mar-20 15:39:57.920 [main] DEBUG nextflow.cli.CmdRun - Launching `my_first_script.nf` [gigantic_fermat] DSL2 - revision: 4b1bbae798
+Mar-20 15:39:57.921 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins default=[]
+Mar-20 15:39:57.921 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins resolved requirement=[]
+Mar-20 15:39:57.942 [main] DEBUG nextflow.Session - Session UUID: d6f85dd2-b6bc-4d81-8a28-2bb81a624d77
+Mar-20 15:39:57.942 [main] DEBUG nextflow.Session - Run name: gigantic_fermat
+Mar-20 15:39:57.942 [main] DEBUG nextflow.Session - Executor pool size: 14
+Mar-20 15:39:57.946 [main] DEBUG nextflow.file.FilePorter - File porter settings maxRetries=3; maxTransfers=50; pollTimeout=null
+Mar-20 15:39:57.948 [main] DEBUG nextflow.util.ThreadPoolBuilder - Creating thread pool 'FileTransfer' minSize=10; maxSize=42; workQueue=LinkedBlockingQueue[-1]; allowCoreThreadTimeout=false
+Mar-20 15:39:57.959 [main] DEBUG nextflow.cli.CmdRun - 
+  Version: 24.10.5 build 5935
+  Created: 04-03-2025 17:55 UTC (18:55 CEST)
+  System: Mac OS X 15.3.2
+  Runtime: Groovy 4.0.23 on OpenJDK 64-Bit Server VM 17.0.10+7
+  Encoding: UTF-8 (UTF-8)
+  Process: 74985@192.168.0.10 [192.168.0.10]
+  CPUs: 14 - Mem: 24 GB (630.6 MB) - Swap: 1 GB (1023 MB)
+Mar-20 15:39:57.966 [main] DEBUG nextflow.Session - Work-dir: /Users/majakuzman/Documents/ngschool25_nextflow/code/work [Mac OS X]
+Mar-20 15:39:57.966 [main] DEBUG nextflow.Session - Script base path does not exist or is not a directory: /Users/majakuzman/Documents/ngschool25_nextflow/code/bin
+Mar-20 15:39:57.971 [main] DEBUG nextflow.executor.ExecutorFactory - Extension executors providers=[]
+Mar-20 15:39:57.975 [main] DEBUG nextflow.Session - Observer factory: DefaultObserverFactory
+Mar-20 15:39:57.984 [main] DEBUG nextflow.cache.CacheFactory - Using Nextflow cache factory: nextflow.cache.DefaultCacheFactory
+Mar-20 15:39:57.988 [main] DEBUG nextflow.util.CustomThreadPool - Creating default thread pool > poolSize: 15; maxThreads: 1000
+Mar-20 15:39:58.011 [main] DEBUG nextflow.Session - Session start
+Mar-20 15:39:58.087 [main] DEBUG nextflow.script.ScriptRunner - > Launching execution
+Mar-20 15:39:58.148 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: local
+Mar-20 15:39:58.148 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
+Mar-20 15:39:58.151 [main] DEBUG nextflow.executor.Executor - [warm up] executor > local
+Mar-20 15:39:58.153 [main] DEBUG n.processor.LocalPollingMonitor - Creating local task monitor for executor 'local' > cpus=14; memory=24 GB; capacity=14; pollInterval=100ms; dumpInterval=5m
+Mar-20 15:39:58.155 [main] DEBUG n.processor.TaskPollingMonitor - >>> barrier register (monitor: local)
+Mar-20 15:39:58.178 [main] DEBUG nextflow.Session - Workflow process names [dsl2]: FASTQC
+Mar-20 15:39:58.178 [main] DEBUG nextflow.Session - Igniting dataflow network (2)
+Mar-20 15:39:58.181 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > FASTQC
+Mar-20 15:39:58.181 [main] DEBUG nextflow.script.ScriptRunner - Parsed script files:
+  Script_e106a1aa2e29c445: /Users/majakuzman/Documents/ngschool25_nextflow/code/my_first_script.nf
+Mar-20 15:39:58.181 [main] DEBUG nextflow.script.ScriptRunner - > Awaiting termination 
+Mar-20 15:39:58.181 [main] DEBUG nextflow.Session - Session await
+Mar-20 15:39:58.264 [Task submitter] DEBUG n.executor.local.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
+Mar-20 15:39:58.265 [Task submitter] INFO  nextflow.Session - [4e/74f651] Submitted process > FASTQC (1)
+Mar-20 15:40:01.294 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[id: 1; name: FASTQC (1); status: COMPLETED; exit: 0; error: -; workDir: /Users/majakuzman/Documents/ngschool25_nextflow/code/work/4e/74f651c5a53f52a55ee30563d4ff01]
+Mar-20 15:40:01.295 [Task monitor] DEBUG nextflow.util.ThreadPoolBuilder - Creating thread pool 'TaskFinalizer' minSize=10; maxSize=42; workQueue=LinkedBlockingQueue[-1]; allowCoreThreadTimeout=false
+Mar-20 15:40:01.310 [main] DEBUG nextflow.Session - Session await > all processes finished
+Mar-20 15:40:01.397 [Task monitor] DEBUG n.processor.TaskPollingMonitor - <<< barrier arrives (monitor: local) - terminating tasks monitor poll loop
+Mar-20 15:40:01.397 [main] DEBUG nextflow.Session - Session await > all barriers passed
+Mar-20 15:40:01.398 [main] DEBUG nextflow.util.ThreadPoolManager - Thread pool 'TaskFinalizer' shutdown completed (hard=false)
+Mar-20 15:40:01.401 [main] DEBUG n.trace.WorkflowStatsObserver - Workflow completed > WorkflowStats[succeededCount=1; failedCount=0; ignoredCount=0; cachedCount=0; pendingCount=0; submittedCount=0; runningCount=0; retriesCount=0; abortedCount=0; succeedDuration=2.9s; failedDuration=0ms; cachedDuration=0ms;loadCpus=0; loadMemory=0; peakRunning=1; peakCpus=1; peakMemory=0; ]
+Mar-20 15:40:01.506 [main] DEBUG nextflow.cache.CacheDB - Closing CacheDB done
+Mar-20 15:40:01.514 [main] DEBUG nextflow.util.ThreadPoolManager - Thread pool 'FileTransfer' shutdown completed (hard=false)
+Mar-20 15:40:01.514 [main] DEBUG nextflow.script.ScriptRunner - > Execution complete -- Goodbye

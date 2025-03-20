@@ -35,6 +35,9 @@ format:
 #    include-after-body: nextflow-highlighting.js
     embed-resources: true
     css: styles.css  # Link the custom CSS file
-
+execute: 
+  echo: true
+  eval: false
+  engine: knitr
 output: 
   html: default
