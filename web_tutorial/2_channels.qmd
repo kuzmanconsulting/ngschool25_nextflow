@@ -32,8 +32,7 @@ Processes are executed independently and are isolated from each other. The only 
 mkdir tests
 cd tests
 
-nextflow run ../code/my_first_script.nf \
-   -c ../code/config.nf 
+nextflow run ../code/my_first_script.nf 
 ```
 
 ::: {.callout-note appearance="minimal"}
@@ -76,9 +75,8 @@ workflow {
 
 ```
 
-Of course, there is no need to hard code inputs to a channel. Some usual options for defining inputs can be:
 
-To view a content of a channel, you can use method view() For example, we created code/script1.nf where we only created a channel from a file. To view it, just add .view() after a channel.
+To view a content of a channel, you can use the operator view() For example, we created code/script1.nf where we only created a channel from a file. To view it, just add .view() after a channel.
 
 ```{nextflow}
 # code/script1.nf
@@ -96,22 +94,22 @@ workflow {
 We did this in [script1](code/script1.nf) . So lets run it and see what we get:
 
 ```{r}
-nextflow run ../code/script1.nf    -c ../code/config.nf 
+nextflow run ../code/script1.nf 
 ```
 
 ::: callout-exercise
 ## 💡 Exercise: task2
 
-What will happen if you try to run the previous script with "../../data/liver\_\*.fq" instead of "../../data/liver_1.fq" also add infile_channel.view() . Try to run it yourself!
+What will happen if you try to run the previous my_first_script.nf with "../../data/liver\_\*.fq" instead of "../../data/liver_1.fq" also add infile_channel.view() . Try to run it yourself!
 :::
 
 ```{bash, eval=FALSE, task2}
 cp ../code/my_first_script.nf ../code/script2.nf
 # change ../code/script2.nf and run it.
-# 1. change 
+# 1. change liver_1.fq to *fq 
 # add .view() to view output of the channel!
 
-nextflow run ../code/script2.nf  -c ../code/config.nf 
+nextflow run ../code/script2.nf  
 
 ```
 
@@ -126,9 +124,20 @@ cp ../code/my_first_script.nf ../code/script2.nf
 # change ../code/script2.nf and run it.
 sed  -i 's|../../data/liver_1.fq" )|../../data/liver_*.fq" ).view()|g' ../code/script2.nf
 
-nextflow run ../code/script2.nf  -c ../code/config.nf 
+nextflow run ../code/script2.nf  
+
 ```
+
+Note: if you add -ansi-log false to nextflow run command, you will see all the processes instead of single process per line!  
+
+```{bash}
+nextflow run ../code/script2.nf  -ansi-log false
+
+```
+
 :::
+
+
 
 Now fastqc is ran 2 times!
 
@@ -140,7 +149,7 @@ There are many ways to create a channel in nextflow, I advise you to look at [th
 
 Now we created multiple files as results, but they are all somewhere around in the work directory. You can define publishDir to have the resuls all in one place.
 
-Add the following line to the process, or config:
+Add the following line to the process:
 
 ```{bash}
   publishDir "results"
@@ -154,13 +163,21 @@ If you want to collect only html files, you can specify this in the output by :
 
 ```
 
+Actually, the process call creates a channel of outputs! 
+
+To view the output channel, just call view in it, as a normal channel, like this:  
+
+```{bash}
+  FASTQC(infile_channel).view() 
+```
+
 ### -resume.
 
 We have now repeated the fastqc computation a lot of times already. There is a neat option in nextflow which allowes you to save computation time and repeat only the steps which have changed. you can activate it by running nextflow command with -resume tag.
 
 ```{bash}
 
-nextflow run ../code/script2.nf  -c ../code/config.nf -resume
+nextflow run ../code/script2.nf  -resume
 ```
 
 This way only the steps we change will be ran again, the rest will be found in cache.
@@ -188,7 +205,8 @@ for example, to specify a `param.infile` in workflow, we would need to call
 
 `nextflow run --infile "path/to/file"` .
 
-Alteernatively, you can create a config file and store your parameters there! - neat for keeping track of runs!
+Alternatively, you can create a config file and store your parameters there! - neat for keeping track of runs!
+
 :::
 
 \
@@ -196,7 +214,7 @@ Try it out!
 
 ```{bash}
 
-nextflow run ../code/script2.nf  -c ../code/config.nf -resume --infile "../../data/*fq"
+nextflow run ../code/script2.nf -resume --infile "../../data/*fq"
 
 ```
 
@@ -205,11 +223,6 @@ nextflow run ../code/script2.nf  -c ../code/config.nf -resume --infile "../../da
 There are many ways to input a file to channel. In bioinformatics, there is often a need to input pairs of files. So, in nextflow there is a special operator for this **fromFilePairs** .
 
 Lets try this out in script 3:
-
-```{bash}
-cp ../code/script2.nf ../code/script3.nf
-```
-
 Open and change script3:
 
 ```{bash}
@@ -227,7 +240,7 @@ and call it with:
 
 ```{bash}
 
-nextflow run ../code/script3.nf  -c ../code/config.nf -resume --infile "../../data/*{1,2}.fq"
+nextflow run ../code/script3.nf -resume --infile "../../data/*{1,2}.fq"
 
 ```
 

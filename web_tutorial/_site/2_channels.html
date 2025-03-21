@@ -5410,8 +5410,9 @@ Try it out!</p>
 <div class="sourceCode cell-code" id="cb26"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a> <span class="fu">cat</span> .nextflow.log <span class="kw">|</span> <span class="fu">grep</span> COMPLETED <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-v</span> <span class="st">&quot;exit: 0&quot;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Just adding flags -with-report -with-dag -with-timeline -with-trace enable reporrts on the pipeline generated automatically.</p>
+<p>If you also want to see all the processes being ran, you can add -ansi-log false</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="ex">run</span> ../code/script3.nf  <span class="at">-c</span> ../code/config.nf <span class="at">-resume</span> <span class="at">--infile</span> <span class="st">&quot;../../data/*{1,2}.fq&quot;</span> <span class="at">--outdir</span> tryme <span class="at">-with-report</span> <span class="at">-with-dag</span> <span class="at">-with-timeline</span> <span class="at">-with-trace</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="ex">run</span> ../code/script3.nf  <span class="at">-c</span> ../code/config.nf <span class="at">-resume</span> <span class="at">--infile</span> <span class="st">&quot;../../data/*{1,2}.fq&quot;</span> <span class="at">--outdir</span> tryme <span class="at">-with-report</span> <span class="at">-with-dag</span> <span class="at">-with-timeline</span> <span class="at">-with-trace</span> <span class="at">-ansi-log</span> false</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <section id="timeline" class="level3">
 <h3 class="anchored" data-anchor-id="timeline">Timeline</h3>
@@ -5494,6 +5495,69 @@ Important files
 </details>
 </div>
 </div>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Getting tricky
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>In the same way that input can be tuple, also we can output (emit a channel) that is made of tuples !</p>
+<p>So, lets try it!<br>
+Add the following to the script and view the outputed channel!</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  <span class="ex">tuple</span> val<span class="er">(</span><span class="ex">sampleid</span><span class="kw">)</span><span class="ex">,</span> path<span class="er">(</span><span class="st">&#39;*trimmed.fq&#39;</span><span class="kw">)</span><span class="ex">,</span> emit: tup, optional: true</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Lets use it to create and run a new process which will do the mapping to the transcriptome!</p>
+<p>( Because we can! ) For example, use the container <code>biocontainers/bwa:v0.7.17_cv1</code> (save it as script5.nf).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="ex">process</span> MAP {</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>  <span class="ex">container</span> <span class="st">&#39;biocontainers/bwa:v0.7.17_cv1&#39;</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>  <span class="ex">tag</span> <span class="st">&quot;</span><span class="va">$sampleid</span><span class="st">&quot;</span> // same approach works</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>  <span class="ex">input:</span></span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>  <span class="ex">tuple</span> val<span class="er">(</span><span class="ex">sampleid</span><span class="kw">)</span><span class="ex">,path</span><span class="er">(</span><span class="ex">infiles</span><span class="kw">)</span> <span class="ex">//</span> same approach works</span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>  <span class="ex">path</span> transcriptome</span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>  <span class="ex">output:</span></span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>  <span class="ex">path</span> <span class="st">&#39;*&#39;</span> </span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a>  <span class="ex">publishDir</span> <span class="st">&quot;</span><span class="va">${params</span><span class="er">.outdir</span><span class="va">}</span><span class="st">/mapped&quot;</span> // we create a subdirectory to keep it cleaner </span>
+<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a>  <span class="ex">script:</span></span>
+<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;&quot;&quot;</span></span>
+<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a><span class="st">  bwa index </span><span class="va">${transcriptome}</span><span class="st"> </span></span>
+<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a><span class="st">  bwa mem </span><span class="va">${transcriptome}</span><span class="st"> </span><span class="va">${infiles</span><span class="op">[</span><span class="dv">0</span><span class="op">]</span><span class="va">}</span><span class="st"> </span><span class="va">${infiles</span><span class="op">[</span><span class="dv">1</span><span class="op">]</span><span class="va">}</span><span class="st"> -o </span><span class="va">${sampleid}</span><span class="st">.sam</span></span>
+<span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a><span class="st">  &quot;&quot;&quot;</span></span>
+<span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a><span class="er">}</span></span>
+<span id="cb31-22"><a href="#cb31-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-23"><a href="#cb31-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-24"><a href="#cb31-24" aria-hidden="true" tabindex="-1"></a><span class="ex">workflow</span> {</span>
+<span id="cb31-25"><a href="#cb31-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-26"><a href="#cb31-26" aria-hidden="true" tabindex="-1"></a>  <span class="ex">//</span> parse input:</span>
+<span id="cb31-27"><a href="#cb31-27" aria-hidden="true" tabindex="-1"></a>  <span class="ex">infile_channel</span> = Channel.fromFilePairs<span class="er">(</span> <span class="ex">params.infile</span> <span class="kw">)</span></span>
+<span id="cb31-28"><a href="#cb31-28" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">.view()</span></span>
+<span id="cb31-29"><a href="#cb31-29" aria-hidden="true" tabindex="-1"></a>  <span class="ex">//</span> run FASTQC:</span>
+<span id="cb31-30"><a href="#cb31-30" aria-hidden="true" tabindex="-1"></a>  <span class="ex">FASTQC</span><span class="er">(</span><span class="ex">infile_channel</span><span class="kw">)</span> </span>
+<span id="cb31-31"><a href="#cb31-31" aria-hidden="true" tabindex="-1"></a>  <span class="ex">trimmed_channel</span> = TRIM<span class="er">(</span><span class="ex">infile_channel</span><span class="kw">)</span></span>
+<span id="cb31-32"><a href="#cb31-32" aria-hidden="true" tabindex="-1"></a>  <span class="ex">FASTQC_SINGLE</span><span class="er">(</span><span class="ex">trimmed_channel.trimmed</span><span class="kw">)</span></span>
+<span id="cb31-33"><a href="#cb31-33" aria-hidden="true" tabindex="-1"></a>  <span class="ex">MAP</span><span class="er">(</span><span class="ex">trimmed_channel.tup,</span> params.transcriptome<span class="kw">)</span></span>
+<span id="cb31-34"><a href="#cb31-34" aria-hidden="true" tabindex="-1"></a><span class="er">}</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+</div>
+<p>BUT! It needs to be run with a full path!<br>
+so:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="va">rp</span><span class="op">=</span><span class="kw">`</span><span class="fu">realpath</span> ../../data/transcriptome.fa<span class="kw">`</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="ex">nextflow</span> run ../code/script3.nf  <span class="at">-c</span> ../code/config.nf <span class="at">-resume</span> <span class="at">--infile</span> <span class="st">&quot;../../data/*{1,2}.fq&quot;</span> <span class="at">--outdir</span> res <span class="at">--transcriptome</span> <span class="va">$rp</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 
 

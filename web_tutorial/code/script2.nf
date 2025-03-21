@@ -9,10 +9,8 @@ process FASTQC {
   path infilename
 
   output:
-  path '*html' 
-  publishDir "results"
-
-  
+  path '*' 
+      
   script:
   """
   fastqc ${infilename}  
@@ -22,8 +20,7 @@ process FASTQC {
 workflow {
 
   // parse input:
-  infile_channel = Channel.fromPath( params.infile )
-                    .view()
+  infile_channel = Channel.fromPath( "../../data/liver_1.fq" )
   // run FASTQC:
   FASTQC(infile_channel)
 

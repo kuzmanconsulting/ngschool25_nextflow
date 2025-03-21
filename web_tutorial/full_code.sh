@@ -10,7 +10,7 @@ infile_1=`basename $1`
 infile_2=`basename $2`
 
 outprefix=`basename ${infile_1%%_1.fq}.html ${infile_1%%_1.fq} `
-datadir_short=`dirname ../data/liver_1.fq`
+datadir_short=`dirname $1`
 datadir=`realpath $datadir_short`
 
 mkdir test_results

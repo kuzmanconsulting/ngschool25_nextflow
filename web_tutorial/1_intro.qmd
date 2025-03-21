@@ -12,6 +12,20 @@ By the end of this workshop you should be able to:
 -   Run an test nf-core pipeline
 -   Know where to go next 🤷
 
+# Set up :
+
+First clone the repository to your local folder:
+
+```{bash}
+git clone https://github.com/kuzmanconsulting/ngschool25_nextflow.git 
+cd ngschool25_nextflow  
+
+```
+
+## The data
+
+The data we will work with is located in the data/ directory. The materials are located in web_tutorial. Open 1_intro.qmd and render it.
+
 # The problem
 
 Lets say we want to do the following, as I am sure you have done many times before:
@@ -25,7 +39,12 @@ We will start with fastq data and perform trimming, after which we will perform 
 In bash we would do this:
 
 ```{bash}
-fastp 
+fastp \
+      --in1 data/liver_1.fq \
+      --in2 data/liver_2.fq \
+      --out1 data/liver_1.trimmed.fq \
+      --out2 data/liver_2.trimmed.fq \
+      -h liver.html 
 ```
 
 But of course, it will fail since we do not have fastp and fastqc installed.
@@ -73,6 +92,7 @@ Once you entered the container image, the fastp program exists and we all have t
 ```{bash, eval=FALSE}
 cat /etc/os-release
 fastp --version
+exit # to exit the container image
 ```
 
 ```         
@@ -107,7 +127,11 @@ docker run -v .:/data -it biocontainers/fastp:v0.20.1_cv1 fastp \
 ::: callout-exercise
 ## 💡 Exercise: task1
 
-Try it yourself! 1. Pull the container biocontainers/fastqc:v0.11.9_cv8 2. Use the fastqc on data/liver_1.fq
+Try it yourself!
+
+1.  Pull the container biocontainers/fastqc:v0.11.9_cv8
+
+2.  Use the fastqc on data/liver_1.fq `fastqc data/liver_1.fq`
 :::
 
 ```{bash, eval=FALSE, task1}
@@ -120,6 +144,7 @@ docker run -v .:/data -it ... ...
 
 ```
 
+::: callout-warning
 Solution:
 
 ```{bash, eval=FALSE, solution-task1}
@@ -128,6 +153,7 @@ Solution:
 docker pull biocontainers/fastqc:v0.11.9_cv8
 docker run -v .:/data -it biocontainers/fastqc:v0.11.9_cv8 fastqc data/liver_1.fq 
 ```
+:::
 
 # bash scripts as a pipeline
 
@@ -136,9 +162,8 @@ In theory, we can create a bash 'pipeline' - script to process each sample with 
 ```{bash, eval=FALSE}
 #| code-fold: true
 
-# we are in the ngschool25_nextflow/web_tutorial directory
+# we are in the ngschool25_nextflow directory
 
-cd .. #to ngschool25_nextflow
 docker run -v .:/data -it biocontainers/fastp:v0.20.1_cv1 fastp \
       --in1 data/liver_1.fq \
       --in2 data/liver_2.fq \
@@ -149,20 +174,7 @@ docker run -v .:/data -it biocontainers/fastp:v0.20.1_cv1 fastp \
 docker run -v .:/data -it biocontainers/fastqc:v0.11.9_cv8 fastqc data/liver_1.fq 
 ```
 
-So the script would look something like this:
-
-[full_code.sh](full_code.sh)
-
-Run it on liver samples:
-
-```{bash}
-# move to the ngschool25_nextflow directory
-# if cou run from the web_tutorial directory, the container will mount the wrong folder to the volume...  
-
-# if needed change permission to run:
-chmod +x code/full_code.sh
-code/full_code.sh ../data/liver_1.fq ../data/liver_1.fq 
-```
+# Problems with bash scripts:  
 
 ## output locations
 
