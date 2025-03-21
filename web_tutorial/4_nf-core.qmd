@@ -13,3 +13,22 @@ Well!
 ## What is nf-core
 
 ![](images/paste-3.png)
+
+## scnanoseq pipeline
+
+Since later in the week we have a hackathon, and we plan to give it on single cell transcriptomics data, I wanted to see what was available from "best practice " workflows to analyse this data. One such pipeline is scnanoseq.
+
+It is quite easy to run an nf-core pipeline, because those pipelines are readily available on github, and nextflow works great with github, you can just do this:
+
+```         
+mkdir test_scnanoseq
+cd test_scnanoseq
+#nextflow run nf-core/scnanoseq -profile test,docker --outdir . 
+nextflow run nf-core/scnanoseq -profile test,singularity --outdir . 
+```
+
+While it works, we can check out [what the pipeline does](https://nf-co.re/scnanoseq/1.1.0/):
+
+![](images/paste-4.png)
+
+As often the case, this pipeline is designed for a specific use case - nanopore long read single cell experiment analysis. Specifically, it supports barcodes 10x_3v3 and 10x_5v2. One of the goals in the hackathon is to adjust and enable this pipeline to be run on real pacbio derived single cell data that we have, and compare results with the ones provided in the paper. Another goal is to change process with a different one.
