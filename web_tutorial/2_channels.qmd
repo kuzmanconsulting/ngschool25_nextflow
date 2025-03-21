@@ -134,6 +134,97 @@ Now fastqc is ran 2 times!
 There are many ways to create a channel in nextflow, I advise you to look at [the official documentation on channel factories](https://www.nextflow.io/docs/latest/reference/channel.html#channel-factory) for more information.
 :::
 
+### publishDir
+
+Now we created multiple files as results, but they are all somewhere around in the work directory. You can define publishDir to have the resuls all in one place.
+
+Add the following line to the process, or config:
+
+```{bash}
+  publishDir "results"
+
+```
+
+If you want to collect only html files, you can specify this in the output by :
+
+```{bash}
+  output "*html"
+
+```
+
+### -resume.
+
+We have now repeated the fastqc computation a lot of times already. There is a neat option in nextflow which allowes you to save computation time and repeat only the steps which have changed. you can activate it by running nextflow command with -resume tag.
+
+```{bash}
+
+nextflow run ../code/script2.nf  -c ../code/config.nf -resume
+```
+
+This way only the steps we change will be ran again, the rest will be found in cache.
+
+### input as a parameter.
+
+Of course, you don't need to hard code the path, you can use variable that will store a path of the file/files you want to input.
+
+in the workflow, you can simply replace the actual file path with a parameter defined in params.nameoftheparameter, where nameoftheparameter can be any variable name you choose.
+
+```{bash}
+# in the workflow:  
+#  // parse input:
+  infile_channel = Channel.fromPath( params.infile )
+                    .view()
+
+```
+
+Neat thing about this is that you can define the parameter directly when you call the nextflow run:
+
+::: callout-tip
+to define a parameter while callling a nextflow run, simply use double dash: '`--`' followed by the name of the parameter.
+
+for example, to specify a `param.infile` in workflow, we would need to call
+
+`nextflow run --infile "path/to/file"` .
+
+Alteernatively, you can create a config file and store your parameters there! - neat for keeping track of runs!
+:::
+
+\
+Try it out!
+
+```{bash}
+
+nextflow run ../code/script2.nf  -c ../code/config.nf -resume --infile "../../data/*fq"
+
+```
+
+### fromFilePairs
+
+There are many ways to input a file to channel. In bioinformatics, there is often a need to input pairs of files. So, in nextflow there is a special operator for this **fromFilePairs** .
+
+Lets try this out in script 3:
+
+```{bash}
+
+workflow {
+
+  // parse input:
+  infile_channel = Channel.fromFilePairs( params.infile )
+                    .view()
+ 
+}
+```
+
+and call it with:
+
+```{bash}
+
+nextflow run ../code/script3.nf  -c ../code/config.nf -resume --infile "../../data/*{1,2}.fq"
+
+```
+
+This creates a channel which is a tuple of two elements. First one is the sample ID, and second one is another tuple of two elements, which are paths to file_1.fq and file_2.fq.
+
 PROCESS::
 
 ```{bash}
@@ -141,8 +232,6 @@ PROCESS::
   tag "${infilename}"
 
 ```
-
-You can view the content of a channel.
 
 TODO
 

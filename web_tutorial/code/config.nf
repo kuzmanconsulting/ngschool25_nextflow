@@ -1,4 +1,5 @@
 process {
     executor = 'local'
 }
-docker.enabled = true
+//docker.enabled = true
+singularity.enabled = true

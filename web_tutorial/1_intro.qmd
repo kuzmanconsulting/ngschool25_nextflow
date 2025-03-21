@@ -2,7 +2,6 @@
 title: "bash and containers"  
 ---
 
-
 # Learning objectives
 
 By the end of this workshop you should be able to:
@@ -24,6 +23,7 @@ We will start with fastq data and perform trimming, after which we will perform 
 ## Solution - bash
 
 In bash we would do this:
+
 ```{bash}
 fastp 
 ```
@@ -46,7 +46,7 @@ docker pull biocontainers/fastp:v0.20.1_cv1
 
 Next, enter the container image:
 
-```{r}  
+```{r}
 
 docker run -v .:/data -it biocontainers/fastp:v0.20.1_cv1 /bin/bash
 
@@ -131,7 +131,7 @@ docker run -v .:/data -it biocontainers/fastqc:v0.11.9_cv8 fastqc data/liver_1.f
 
 # bash scripts as a pipeline
 
-In theory, we can create a bash 'pipeline' - script to process each sample with both steps.  
+In theory, we can create a bash 'pipeline' - script to process each sample with both steps.
 
 ```{bash, eval=FALSE}
 #| code-fold: true
@@ -149,13 +149,13 @@ docker run -v .:/data -it biocontainers/fastp:v0.20.1_cv1 fastp \
 docker run -v .:/data -it biocontainers/fastqc:v0.11.9_cv8 fastqc data/liver_1.fq 
 ```
 
-So the script would look something like this:  
+So the script would look something like this:
 
 [full_code.sh](full_code.sh)
 
-Run it on liver samples:  
+Run it on liver samples:
 
-``` {bash}
+```{bash}
 # move to the ngschool25_nextflow directory
 # if cou run from the web_tutorial directory, the container will mount the wrong folder to the volume...  
 
@@ -164,36 +164,36 @@ chmod +x code/full_code.sh
 code/full_code.sh ../data/liver_1.fq ../data/liver_1.fq 
 ```
 
-## output locations 
+## output locations
 
-We need to take care of where the outputs will be located.  
+We need to take care of where the outputs will be located.
 
-## logging  
+## logging
 
-We need to manually create logs if we want to know what happened. 
+We need to manually create logs if we want to know what happened.
 
 ## memory, threads
 
- If we want to allocate different amount of memory and CPUs to each of the processes we make, we need to create separate bash scripts for each process, and define the threads and memory separately.
+If we want to allocate different amount of memory and CPUs to each of the processes we make, we need to create separate bash scripts for each process, and define the threads and memory separately.
 
-## process dependencies  
+## process dependencies
 
 Next, we need to define dependencies - we will have to wait for one script to finish and then the other one can start running. This will depend on where we run the scripts - if we run it locally in bash, we can use wait; if we run it in slurm/pbs/torque, we need to take care of dependencies ourselves.
 
-## parallelism  
+## parallelism
 
-We need to take care of writing the bash "pipeline" to enable paralel execution. Also we need to take care of running the scripts in parallel on multiple samples. 
+We need to take care of writing the bash "pipeline" to enable paralel execution. Also we need to take care of running the scripts in parallel on multiple samples.
 
-## resume  
+## resume
 
-We need to take care of status of each of the runs. If some sample fails in one step, we need to find it manually to understand what and where failed. 
+We need to take care of status of each of the runs. If some sample fails in one step, we need to find it manually to understand what and where failed.
 
-We need to resume the execution of the pipeline manually when some step fails in some sample.  
+We need to resume the execution of the pipeline manually when some step fails in some sample.
 
 ## upscaling to production level
 
 The additional problems arise when you want to go to production-level, and run this pipeline on thousands of samples. You will want to use the cloud for this, and will need to implement the pipeline to work on the cloud.
 
-## documentation  
+## documentation
 
-We need to take care of the documentation. What samples were ran? How do we know if they all ran as expected?  With which version of the code were they run? We need to keep track of that manually.  
+We need to take care of the documentation. What samples were ran? How do we know if they all ran as expected? With which version of the code were they run? We need to keep track of that manually.

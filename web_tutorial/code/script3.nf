@@ -22,9 +22,7 @@ process FASTQC {
 workflow {
 
   // parse input:
-  infile_channel = Channel.fromPath( params.infile )
+  infile_channel = Channel.fromFilePairs( params.infile )
                     .view()
-  // run FASTQC:
-  FASTQC(infile_channel)
 
 }
