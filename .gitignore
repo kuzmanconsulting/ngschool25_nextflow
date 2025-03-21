@@ -1,0 +1,5 @@
+test_results/
+web_tutorial/tests/
+web_tutorial/tests/*
+./*/test_results/
+./*/test_nextflow/
