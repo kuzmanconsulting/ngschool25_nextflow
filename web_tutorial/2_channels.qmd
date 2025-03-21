@@ -131,6 +131,7 @@ nextflow run ../code/script2.nf  -c ../code/config.nf
 Now fastqc is ran 2 times!
 
 ::: callout-tip
+
 There are many ways to create a channel in nextflow, I advise you to look at [the official documentation on channel factories](https://www.nextflow.io/docs/latest/reference/channel.html#channel-factory) for more information.
 :::
 
@@ -205,6 +206,12 @@ There are many ways to input a file to channel. In bioinformatics, there is ofte
 Lets try this out in script 3:
 
 ```{bash}
+cp ../code/script2.nf ../code/script3.nf
+```
+
+Open and change script3:
+
+```{bash}
 
 workflow {
 
@@ -225,19 +232,170 @@ nextflow run ../code/script3.nf  -c ../code/config.nf -resume --infile "../../da
 
 This creates a channel which is a tuple of two elements. First one is the sample ID, and second one is another tuple of two elements, which are paths to file_1.fq and file_2.fq.
 
-PROCESS::
+It is easy to access the individual elements, you can do it in the following way:
+
+In the process, it is easy to parse this, just instead of `path infilename` use:
 
 ```{bash}
 
-  tag "${infilename}"
+tuple val(sampleid),path(infiles)
 
 ```
 
-TODO
+Now we can access individual file from infiles with `${infiles[0]} ${infiles[1]}`, and we know the sampleid, it is saved as variable `${sampleid}`.
 
-show view
+Another neat thing you can do is to tag the process execution by some name, lets see this by using "tag":
 
-explain input from file pairs
+```{nextflow}
+process FASTQC {
+    
+  container 'biocontainers/fastqc:v0.11.9_cv8'
+**  tag "running on $sampleid" **
+
+  input:
+  tuple val(sampleid),path(infiles)
+  
+  output:
+  path '*html' 
+  publishDir "results"
+
+  
+  script:
+  """
+  fastqc ${infiles[0]} ${infiles[1]}
+  """
+}
+
+```
+
+
+OK, cool! We are ready for some exercise!!  
+
+::: callout-exercise
+## 💡 Exercise: Add outdir parameter!  
+
+Add a parameter "outdir" to specify where the output location is for the final nextflow results. 
+
+:::
+
+Solution:
+
+Adding the parameter to script:  
+```{bash, eval=FALSE, solution-task3a}
+#| code-fold: true
+
+process FASTQC {
+    
+  container 'biocontainers/fastqc:v0.11.9_cv8'
+  tag "$sampleid"
+
+  input:
+  tuple val(sampleid),path(infiles)
+  
+  output:
+  path '*html' 
+  publishDir params.outdir
+
+  
+  script:
+  """
+  fastqc ${infiles[0]} ${infiles[1]} 
+  """
+}
+```
+
+Running it with outdir:  
+```{bash, eval=FALSE, solution-task3b}
+#| code-fold: true
+
+nextflow run ../code/script3.nf  -c ../code/config.nf -resume --infile "../../data/*{1,2}.fq" --outdir tryme 
+
+```
+
+
+
+
+::: callout-exercise
+## 💡 Exercise: Add a trimming step!  
+
+OK, we are ready for a bigger bite!  
+
+Create a new process, TRIM that will trim the fastq files as we did before:
+Use appropriate variables as needed!  
+
+Remember, we used the container: `'biocontainers/fastp:v0.20.1_cv1'`. 
+
+
+This is what we have from before:  
+
+```{bash}
+
+fastp\
+  --in1 data/liver_1.fq\
+  --in2 data/liver_2.fq\
+  --out1 data/liver_1.trimmed.fq\
+  --out2 data/liver_2.trimmed.fq\
+  -h liver.html 
+
+```
+
+:::
+
+
+
+Solution:
+
+Adding the parameter to script:  
+```{bash, eval=FALSE, solution-task3a}
+#| code-fold: true
+
+process TRIM {
+    
+  container 'biocontainers/fastp:v0.20.1_cv1'
+  tag "$sampleid"
+
+  input:
+  tuple val(sampleid),path(infiles)
+  
+  output:
+  path '*' 
+  publishDir params.outdir
+
+  
+  script:
+  """
+  fastp\
+  --in1 ${infiles[0]}\
+  --in2 ${infiles[1]}\
+  --out1 ${sampleid}_1.trimmed.fq\
+  --out2 ${sampleid}_2.trimmed.fq\
+  -h ${sampleid}.html 
+
+  """
+}
+
+workflow {
+
+  // parse input:
+  infile_channel = Channel.fromFilePairs( params.infile )
+                    .view()
+  // run FASTQC:
+  FASTQC(infile_channel) 
+  trimmed_channel = TRIM(infile_channel).out
+  FASTQC(trimmed_channel) 
+
+}
+
+```
+
+Running it with outdir:  
+```{bash, eval=FALSE, solution-task3b}
+#| code-fold: true
+
+nextflow run ../code/script3.nf  -c ../code/config.nf -resume --infile "../../data/*{1,2}.fq" --outdir tryme 
+
+```
+
 
 ## Exercise: add a trimming step
 

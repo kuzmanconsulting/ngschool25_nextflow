@@ -1,90 +1,70 @@
 [
   {
+    "objectID": "2_channels.html",
+    "href": "2_channels.html",
+    "title": "Nextflow intro",
+    "section": "",
+    "text": "Nextflow takes care of all of those problems for us. It is both an workflow orchestrator and a coding language.\n\n\n\n\n\n\nkey terms\n\n\n\nworkflow: pipeline in nextflow is called a workflow\nchannel: structure which transfers data between steps in the pipeline\nprocess: task that will happen on data\n\n\n\n\nNextflow workflow is made by joining together different processes. Each process can be written in any scripting language that can be executed by the Linux platform (Bash, Perl, Ruby, Python, etc.).\n\nProcesses are executed independently and are isolated from each other. The only way they can communicate is via “channels”, asynchronous first-in, first-out (FIFO) queues. In other words, every input and output of a process is represented as a channel. The interaction between these processes, and ultimately the workflow execution flow itself, is implicitly defined by these input and output declarations.\n\n\n\nFirst nextflow script\n\nmkdir tests\ncd tests\n\nnextflow run ../code/my_first_script.nf \\\n   -c ../code/config.nf \n\n\n\n\n\n\n\nExplanation:\n\n\n\nnextflow run code/my_first_script.nf runs a nextflow script code/my_first_script.nf\n-c config.nf uses configuration file for nextflow run. Parameters which are nextflow-related are handed with a single dash.\n\n\n\n\n\n\nnextflow.enable.dsl=2 # (Domain-Specific Language version 2)\n\nprocess FASTQC {\n    \n  container 'biocontainers/fastqc:v0.11.9_cv8'\n\n  input:\n  path infilename\n\n  output:\n  path '*' \n      \n  script:\n  \"\"\"\n  fastqc ${infilename}  \n  \"\"\"\n}\n\nworkflow {\n\n  // parse input:\n  infile_channel = Channel.fromPath( \"../../data/liver_1.fq\" )\n\n  // run FASTQC:\n  FASTQC(infile_channel)\n\n}\n\n\nOf course, there is no need to hard code inputs to a channel. Some usual options for defining inputs can be:\nTo view a content of a channel, you can use method view() For example, we created code/script1.nf where we only created a channel from a file. To view it, just add .view() after a channel.\n\n# code/script1.nf\nworkflow {\n\n  // parse input:\n  infile_channel_1 = \n    Channel.fromPath( \"../../data/liver_*.fq\" )\n    .view()\n\n}\n\n\nWe did this in script1 . So lets run it and see what we get:\n\nnextflow run ../code/script1.nf    -c ../code/config.nf \n\n\n\n\nWhat will happen if you try to run the previous script with “../../data/liver_*.fq” instead of “../../data/liver_1.fq” also add infile_channel.view() . Try to run it yourself!\n\n\ncp ../code/my_first_script.nf ../code/script2.nf\n# change ../code/script2.nf and run it.\n# 1. change \n# add .view() to view output of the channel!\n\nnextflow run ../code/script2.nf  -c ../code/config.nf \n\nSolution:\n\n\nCode\n\ncp ../code/my_first_script.nf ../code/script2.nf\n# change ../code/script2.nf and run it.\nsed  -i 's|../../data/liver_1.fq\" )|../../data/liver_*.fq\" ).view()|g' ../code/script2.nf\n\nnextflow run ../code/script2.nf  -c ../code/config.nf \n\n\nNow fastqc is ran 2 times!\n\n\n\n\n\n\nTip\n\n\n\nThere are many ways to create a channel in nextflow, I advise you to look at the official documentation on channel factories for more information.\n\n\n\n\nNow we created multiple files as results, but they are all somewhere around in the work directory. You can define publishDir to have the resuls all in one place.\nAdd the following line to the process, or config:\n\n  publishDir \"results\"\n\nIf you want to collect only html files, you can specify this in the output by :\n\n  output \"*html\"\n\n\n\n\nWe have now repeated the fastqc computation a lot of times already. There is a neat option in nextflow which allowes you to save computation time and repeat only the steps which have changed. you can activate it by running nextflow command with -resume tag.\n\n\nnextflow run ../code/script2.nf  -c ../code/config.nf -resume\n\nThis way only the steps we change will be ran again, the rest will be found in cache.\n\n\n\nOf course, you don’t need to hard code the path, you can use variable that will store a path of the file/files you want to input.\nin the workflow, you can simply replace the actual file path with a parameter defined in params.nameoftheparameter, where nameoftheparameter can be any variable name you choose.\n\n# in the workflow:  \n#  // parse input:\n  infile_channel = Channel.fromPath( params.infile )\n                    .view()\n\nNeat thing about this is that you can define the parameter directly when you call the nextflow run:\n\n\n\n\n\n\nTip\n\n\n\nto define a parameter while callling a nextflow run, simply use double dash: ‘--’ followed by the name of the parameter.\nfor example, to specify a param.infile in workflow, we would need to call\nnextflow run --infile \"path/to/file\" .\nAlteernatively, you can create a config file and store your parameters there! - neat for keeping track of runs!\n\n\n\nTry it out!\n\n\nnextflow run ../code/script2.nf  -c ../code/config.nf -resume --infile \"../../data/*fq\"\n\n\n\n\nThere are many ways to input a file to channel. In bioinformatics, there is often a need to input pairs of files. So, in nextflow there is a special operator for this fromFilePairs .\nLets try this out in script 3:\n\ncp ../code/script2.nf ../code/script3.nf\n\nOpen and change script3:\n\n\nworkflow {\n\n  // parse input:\n  infile_channel = Channel.fromFilePairs( params.infile )\n                    .view()\n \n}\n\nand call it with:\n\n\nnextflow run ../code/script3.nf  -c ../code/config.nf -resume --infile \"../../data/*{1,2}.fq\"\n\nThis creates a channel which is a tuple of two elements. First one is the sample ID, and second one is another tuple of two elements, which are paths to file_1.fq and file_2.fq.\nIt is easy to access the individual elements, you can do it in the following way:\nIn the process, it is easy to parse this, just instead of path infilename use:\n\n\ntuple val(sampleid),path(infiles)\n\nNow we can access individual file from infiles with infiles[1] and infiles[2], and we know the sampleid, it is saved as variable “sampleid”.\nAnother neat thing you can do is to tag the process execution by some name, lets see this by using “tag”:\n\nprocess FASTQC {\n    \n  container 'biocontainers/fastqc:v0.11.9_cv8'\n**  tag \"$sampleid\" **\n\n  input:\n  tuple val(sampleid),path(infiles)\n  \n  output:\n  path '*html' \n  publishDir \"results\"\n\n  \n  script:\n  \"\"\"\n  fastqc $infiles[1] $infiles[2] \n  \"\"\"\n}\n\n\nPROCESS::\n\n\n  tag \"${infilename}\"\n\nTODO\nshow view\nexplain input from file pairs\n\n\n\ndocker run -v .:/data -it biocontainers/fastp:v0.20.1_cv1 fastp\n–in1 data/liver_1.fq\n–in2 data/liver_2.fq\n–out1 data/liver_1.trimmed.fq\n–out2 data/liver_2.trimmed.fq\n-h liver.html\n\n\nprocess FASTP {\n    \n  container 'biocontainers/fastp:v0.20.1_cv1'\n\n  input:\n  path infilename\n\n  output:\n  path '*' \n      \n  script:\n  \"\"\"\n  fastp \\\n    --in1 ${infilename} \n    --out1 liver_1.trimmed.fq \\\n    -h liver.html \n  \"\"\"\n}",
+    "crumbs": [
+      "Channels"
+    ]
+  },
+  {
+    "objectID": "2_channels.html#processes-and-channels",
+    "href": "2_channels.html#processes-and-channels",
+    "title": "Nextflow intro",
+    "section": "",
+    "text": "Nextflow workflow is made by joining together different processes. Each process can be written in any scripting language that can be executed by the Linux platform (Bash, Perl, Ruby, Python, etc.).\n\nProcesses are executed independently and are isolated from each other. The only way they can communicate is via “channels”, asynchronous first-in, first-out (FIFO) queues. In other words, every input and output of a process is represented as a channel. The interaction between these processes, and ultimately the workflow execution flow itself, is implicitly defined by these input and output declarations.",
+    "crumbs": [
+      "Channels"
+    ]
+  },
+  {
+    "objectID": "2_channels.html#my-first-nextflow-script",
+    "href": "2_channels.html#my-first-nextflow-script",
+    "title": "Nextflow intro",
+    "section": "",
+    "text": "First nextflow script\n\nmkdir tests\ncd tests\n\nnextflow run ../code/my_first_script.nf \\\n   -c ../code/config.nf \n\n\n\n\n\n\n\nExplanation:\n\n\n\nnextflow run code/my_first_script.nf runs a nextflow script code/my_first_script.nf\n-c config.nf uses configuration file for nextflow run. Parameters which are nextflow-related are handed with a single dash.",
+    "crumbs": [
+      "Channels"
+    ]
+  },
+  {
+    "objectID": "2_channels.html#script-walkthrough",
+    "href": "2_channels.html#script-walkthrough",
+    "title": "Nextflow intro",
+    "section": "",
+    "text": "nextflow.enable.dsl=2 # (Domain-Specific Language version 2)\n\nprocess FASTQC {\n    \n  container 'biocontainers/fastqc:v0.11.9_cv8'\n\n  input:\n  path infilename\n\n  output:\n  path '*' \n      \n  script:\n  \"\"\"\n  fastqc ${infilename}  \n  \"\"\"\n}\n\nworkflow {\n\n  // parse input:\n  infile_channel = Channel.fromPath( \"../../data/liver_1.fq\" )\n\n  // run FASTQC:\n  FASTQC(infile_channel)\n\n}\n\n\nOf course, there is no need to hard code inputs to a channel. Some usual options for defining inputs can be:\nTo view a content of a channel, you can use method view() For example, we created code/script1.nf where we only created a channel from a file. To view it, just add .view() after a channel.\n\n# code/script1.nf\nworkflow {\n\n  // parse input:\n  infile_channel_1 = \n    Channel.fromPath( \"../../data/liver_*.fq\" )\n    .view()\n\n}\n\n\nWe did this in script1 . So lets run it and see what we get:\n\nnextflow run ../code/script1.nf    -c ../code/config.nf",
+    "crumbs": [
+      "Channels"
+    ]
+  },
+  {
+    "objectID": "2_channels.html#exercise-task2",
+    "href": "2_channels.html#exercise-task2",
+    "title": "Nextflow intro",
+    "section": "",
+    "text": "What will happen if you try to run the previous script with “../../data/liver_*.fq” instead of “../../data/liver_1.fq” also add infile_channel.view() . Try to run it yourself!",
+    "crumbs": [
+      "Channels"
+    ]
+  },
+  {
+    "objectID": "2_channels.html#exercise-add-a-trimming-step",
+    "href": "2_channels.html#exercise-add-a-trimming-step",
+    "title": "Nextflow intro",
+    "section": "",
+    "text": "docker run -v .:/data -it biocontainers/fastp:v0.20.1_cv1 fastp\n–in1 data/liver_1.fq\n–in2 data/liver_2.fq\n–out1 data/liver_1.trimmed.fq\n–out2 data/liver_2.trimmed.fq\n-h liver.html\n\n\nprocess FASTP {\n    \n  container 'biocontainers/fastp:v0.20.1_cv1'\n\n  input:\n  path infilename\n\n  output:\n  path '*' \n      \n  script:\n  \"\"\"\n  fastp \\\n    --in1 ${infilename} \n    --out1 liver_1.trimmed.fq \\\n    -h liver.html \n  \"\"\"\n}",
+    "crumbs": [
+      "Channels"
+    ]
+  },
+  {
     "objectID": "1_intro.html",
     "href": "1_intro.html",
     "title": "bash and containers",
     "section": "",
     "text": "By the end of this workshop you should be able to:\n\nsee the advantages of Nextflow over bash\nWrite a simple Nextflow workflow\nHave basic understanding of the concepts of Channels, Processes and Operators\nRun an test nf-core pipeline\nKnow where to go next 🤷",
-    "crumbs": [
-      "Introduction"
-    ]
-  },
-  {
-    "objectID": "1_intro.html#this-is-intro-slide",
-    "href": "1_intro.html#this-is-intro-slide",
-    "title": "Introduction",
-    "section": "",
-    "text": "Something is written here. Nice!",
-    "crumbs": [
-      "Introduction"
-    ]
-  },
-  {
-    "objectID": "1_intro.html#processes-and-channels.",
-    "href": "1_intro.html#processes-and-channels.",
-    "title": "Introduction",
-    "section": "",
-    "text": "In practice, a Nextflow workflow is made by joining together different processes. Each process can be written in any scripting language that can be executed by the Linux platform (Bash, Perl, Ruby, Python, etc.).\nProcesses are executed independently and are isolated from each other, i.e., they do not share a common (writable) state. The only way they can communicate is via asynchronous first-in, first-out (FIFO) queues, called channels. In other words, every input and output of a process is represented as a channel. The interaction between these processes, and ultimately the workflow execution flow itself, is implicitly defined by these input and output declarations.\n#!/usr/bin/env nextflow\n\nparams.greeting = 'Hello world!' #| This sets a greeting message\ngreeting_ch = Channel.of(params.greeting) #| Creates a Nextflow channel from the greeting\n\nprocess SPLITLETTERS {\n    input:\n    val x #| Takes a single input value\n\n    script:\n    \"\"\"\n    echo $x | fold -w1\n    \"\"\"\n}",
-    "crumbs": [
-      "Introduction"
-    ]
-  },
-  {
-    "objectID": "1_intro.html#processes-and-channels",
-    "href": "1_intro.html#processes-and-channels",
-    "title": "Introduction",
-    "section": "Processes and Channels",
-    "text": "Processes and Channels\nNextflow workflow is made by joining together different processes. Each process can be written in any scripting language that can be executed by the Linux platform (Bash, Perl, Ruby, Python, etc.).\n\nProcesses are executed independently and are isolated from each other. The only way they can communicate is via “channels”, asynchronous first-in, first-out (FIFO) queues. In other words, every input and output of a process is represented as a channel. The interaction between these processes, and ultimately the workflow execution flow itself, is implicitly defined by these input and output declarations.\n\n#!/usr/bin/env nextflow\n\nparams.greeting = 'Hello world!' #| This sets a greeting message\ngreeting_ch = Channel.of(params.greeting) #| Creates a Nextflow channel from the greeting\n\nprocess SPLITLETTERS {\n    input:\n    val x #| Takes a single input value\n\n    script:\n    \"\"\"\n    echo $x | fold -w1\n    \"\"\"\n}",
-    "crumbs": [
-      "Introduction"
-    ]
-  },
-  {
-    "objectID": "1_intro.html#my-first-nextflow-script",
-    "href": "1_intro.html#my-first-nextflow-script",
-    "title": "Introduction",
-    "section": "My first nextflow script",
-    "text": "My first nextflow script\n\nnextflow.enable.dsl=2\n\n\nworkflow {\n  \n  // parse input:\n    infile = params.infile\n  infile_channel = Channel.fromList( infile )\n  \n  // run FASTQC:\n  FASTQC(infile_1_channel, infile_2_channel)\n\n}\n\n\nprocess FASTQC {\n    \n    label 'fastqc'\n    \n    input:\n    path infilename\n\n    output:\n    path '*' \n        \n    shell:\n  '''\n  fastqc !{infilename}  \n  '''\n}",
-    "crumbs": [
-      "Introduction"
-    ]
-  },
-  {
-    "objectID": "1_intro.html#nextflow-training-materials",
-    "href": "1_intro.html#nextflow-training-materials",
-    "title": "Introduction",
-    "section": "",
-    "text": "Tip\n\n\n\nThere is a great community around nextflow, and tons of training material exist for all levels of experience with it. This workshop is heavily based on materials provided in those courses, assembled to my personal preferences. I sincerely encourage you to learn nextflow on your own using the materials available on the official nextflow training website.",
-    "crumbs": [
-      "Introduction"
-    ]
-  },
-  {
-    "objectID": "1_intro.html#learning-objectives",
-    "href": "1_intro.html#learning-objectives",
-    "title": "Introduction",
-    "section": "Learning objectives",
-    "text": "Learning objectives\nBy the end of this workshop you should be able to:\n\nWrite a simple Nextflow workflow\nHave basic understanding of the concepts of Channels, Processes and Operators\nRun an test nf-core pipeline\nKnow where to go next 🤷",
-    "crumbs": [
-      "Introduction"
-    ]
-  },
-  {
-    "objectID": "1_intro.html#learning-objectives-1",
-    "href": "1_intro.html#learning-objectives-1",
-    "title": "Introduction",
-    "section": "Learning objectives¶",
-    "text": "Learning objectives¶\nBy the end of this workshop you should be able to:\n\nWrite a simple Nextflow workflow\nDescribe the Nextflow concepts of Channels, Processes and Operators\nHave an understanding of containerized workflows\nUnderstand the different execution platforms supported by Nextflow\nDescribe the Nextflow community and ecosystem",
-    "crumbs": [
-      "Introduction"
-    ]
-  },
-  {
-    "objectID": "1_intro.html#the-problem",
-    "href": "1_intro.html#the-problem",
-    "title": "Introduction",
-    "section": "The problem",
-    "text": "The problem\nLets say we want to do the following, as I am sure you have done many times before:\nWe will start with fastq data and perform trimming, after which we will perform fastqc.\n\n\nSolution - bash\nIn bash we would do this:\nfastp --in1 liver_1.fq \\\n      --in2 liver_2.fq \\\n      --out1 liver_1.trimmed.fq \\\n      --out2 liver_2.trimmed.fq \\\n      -h liver.html \n\nfastqc liver_1.fq\nfastqc liver_1.trimmed.fq\nBut of course, it will fail since we do not have fastp and fastqc installed.\n\n\n\n\n\n\nTip\n\n\n\nGood practice is to use containers which will enable reproducibility. Building dockerfiles and images is sometimes tricky, but also could be defying the purpose of reproducible research. You can find many already available dockers/singularity images at dockerhub and quay.io .\n\n\n\n\nUse containers!\nWe will use the docker for fastp and fastqc available on dockerhub:\nFirst; pull the container locally:\n\ndocker pull biocontainers/fastqc:v0.11.9_cv8\n\nNext, enter the container image:\n\ndocker run -v .:/data -it biocontainers/fastqc:v0.11.9_cv8\n\n\nExplanation\n\nIf we wanted to do this on multiple files we could write a bash script:\n\n\n\n\n\n\ncommand\nexplained\n\n\n\n\ndocker run\nThis is the basic Docker command used to create and start a new container from a specified image.\n\n\n-v .:/data\nThis flag mounts a volume. Here, the current directory (represented by .) on your host machine is mapped to the /data directory inside the container. This means any files in your current directory will be accessible in /data within the container, and changes made there will be reflected back on your host.\n\n\n-i (interactive)\nKeeps STDIN open so you can interact with the container.\n\n\n-t (tty)\nAllocates a pseudo-TTY, which provides a terminal session inside the container.\nTogether, they allow you to run the container in interactive mode, making it easier to execute commands and see outputs.\n\n\nbiocontainers/fastqc:v0.11.9_cv8\nThis is the Docker image being used. It specifies: image and tag.\n\n\n\n\n\n\nLets try to run it on our 4 samples:\n…",
     "crumbs": [
       "Introduction"
     ]
@@ -110,36 +90,6 @@
     ]
   },
   {
-    "objectID": "1_intro.html#bash-with-containers",
-    "href": "1_intro.html#bash-with-containers",
-    "title": "Introduction",
-    "section": "bash with containers",
-    "text": "bash with containers\nSo, lets combine bash command for fastp and container:\n\ndocker run -v .:/data -it biocontainers/fastp:v0.20.1_cv1 fastp \\\n      --in1 data/liver_1.fq \\\n      --in2 data/liver_2.fq \\\n      --out1 data/liver_1.trimmed.fq \\\n      --out2 data/liver_2.trimmed.fq \\\n      -h liver.html",
-    "crumbs": [
-      "Introduction"
-    ]
-  },
-  {
-    "objectID": "1_intro.html#exercise",
-    "href": "1_intro.html#exercise",
-    "title": "Introduction",
-    "section": "💡 Exercise:",
-    "text": "💡 Exercise:\nTry it yourself! Rewrite the fastqc part to use the appropriate container biocontainers/fastqc:v0.11.9_cv8 on data/liver_1.fq :",
-    "crumbs": [
-      "Introduction"
-    ]
-  },
-  {
-    "objectID": "1_intro.html#exercise-task1",
-    "href": "1_intro.html#exercise-task1",
-    "title": "bash and containers",
-    "section": "💡 Exercise: task1",
-    "text": "💡 Exercise: task1\nTry it yourself! 1. Pull the container biocontainers/fastqc:v0.11.9_cv8 2. Use the fastqc on data/liver_1.fq",
-    "crumbs": [
-      "Introduction"
-    ]
-  },
-  {
     "objectID": "1_intro.html#bash-command-with-containers",
     "href": "1_intro.html#bash-command-with-containers",
     "title": "bash and containers",
@@ -150,101 +100,11 @@
     ]
   },
   {
-    "objectID": "2_channels.html",
-    "href": "2_channels.html",
-    "title": "Nextflow intro",
-    "section": "",
-    "text": "Nextflow takes care of all of those problems for us. It is both an workflow orchestrator and a coding language.\n\n\n\n\n\n\nkey terms\n\n\n\nworkflow: pipeline in nextflow is called a workflow\nchannel: structure which transfers data between steps in the pipeline\nprocess: task that will happen on data\n\n\n\n\nNextflow workflow is made by joining together different processes. Each process can be written in any scripting language that can be executed by the Linux platform (Bash, Perl, Ruby, Python, etc.).\n\nProcesses are executed independently and are isolated from each other. The only way they can communicate is via “channels”, asynchronous first-in, first-out (FIFO) queues. In other words, every input and output of a process is represented as a channel. The interaction between these processes, and ultimately the workflow execution flow itself, is implicitly defined by these input and output declarations.\n\n\n\nFirst nextflow script\n\nmkdir tests\ncd tests\n\nnextflow run ../code/my_first_script.nf \\\n   -c ../code/config.nf \n\n\n\n\n\n\n\nExplanation:\n\n\n\nnextflow run code/my_first_script.nf runs a nextflow script code/my_first_script.nf\n-c config.nf uses configuration file for nextflow run. Parameters which are nextflow-related are handed with a single dash.\n\n\n\n\n\n\nnextflow.enable.dsl=2 # (Domain-Specific Language version 2)\n\nprocess FASTQC {\n    \n  container 'biocontainers/fastqc:v0.11.9_cv8'\n\n  input:\n  path infilename\n\n  output:\n  path '*' \n      \n  script:\n  \"\"\"\n  fastqc ${infilename}  \n  \"\"\"\n}\n\nworkflow {\n\n  // parse input:\n  infile_channel = Channel.fromPath( \"../../data/liver_1.fq\" )\n\n  // run FASTQC:\n  FASTQC(infile_channel)\n\n}\n\n\nOf course, there is no need to hard code inputs to a channel. Some usual options for defining inputs can be:\nTo view a content of a channel, you can use method view() For example, we created code/script1.nf where we only created a channel from a file. To view it, just add .view() after a channel.\n\n# code/script1.nf\nworkflow {\n\n  // parse input:\n  infile_channel_1 = \n    Channel.fromPath( \"../../data/liver_*.fq\" )\n    .view()\n\n}\n\n\nWe did this in script1 . So lets run it and see what we get:\n\nnextflow run ../code/script1.nf    -c ../code/config.nf \n\n\n\n\nWhat will happen if you try to run the previous script with “../../data/liver_*.fq” instead of “../../data/liver_1.fq” also add infile_channel.view() . Try to run it yourself!\n\n\ncp ../code/my_first_script.nf ../code/script2.nf\n# change ../code/script2.nf and run it.\n# 1. change \n# add .view() to view output of the channel!\n\nnextflow run ../code/script2.nf  -c ../code/config.nf \n\nSolution:\n\n\nCode\n\ncp ../code/my_first_script.nf ../code/script2.nf\n# change ../code/script2.nf and run it.\nsed  -i 's|../../data/liver_1.fq\" )|../../data/liver_*.fq\" ).view()|g' ../code/script2.nf\n\nnextflow run ../code/script2.nf  -c ../code/config.nf \n\n\nNow fastqc is ran 2 times!\n\n\n\n\n\n\nTip\n\n\n\nThere are many ways to create a channel in nextflow, I advise you to look at the official documentation on channel factories for more information.\n\n\nPROCESS::\n\n\n  tag \"${infilename}\"\n\nYou can view the content of a channel.\nTODO\nshow view\nexplain input from file pairs\n\n\ndocker run -v .:/data -it biocontainers/fastp:v0.20.1_cv1 fastp\n–in1 data/liver_1.fq\n–in2 data/liver_2.fq\n–out1 data/liver_1.trimmed.fq\n–out2 data/liver_2.trimmed.fq\n-h liver.html\n\n\nprocess FASTP {\n    \n  container 'biocontainers/fastp:v0.20.1_cv1'\n\n  input:\n  path infilename\n\n  output:\n  path '*' \n      \n  script:\n  \"\"\"\n  fastp \\\n    --in1 ${infilename} \n    --out1 liver_1.trimmed.fq \\\n    -h liver.html \n  \"\"\"\n}",
-    "crumbs": [
-      "Channels"
-    ]
-  },
-  {
-    "objectID": "2_channels.html#my-first-nextflow-script",
-    "href": "2_channels.html#my-first-nextflow-script",
-    "title": "Nextflow intro",
-    "section": "",
-    "text": "First nextflow script\n\nmkdir tests\ncd tests\n\nnextflow run ../code/my_first_script.nf \\\n   -c ../code/config.nf \n\n\n\n\n\n\n\nExplanation:\n\n\n\nnextflow run code/my_first_script.nf runs a nextflow script code/my_first_script.nf\n-c config.nf uses configuration file for nextflow run. Parameters which are nextflow-related are handed with a single dash.",
-    "crumbs": [
-      "Channels"
-    ]
-  },
-  {
-    "objectID": "2_channels.html#processes-and-channels",
-    "href": "2_channels.html#processes-and-channels",
-    "title": "Nextflow intro",
-    "section": "",
-    "text": "Nextflow workflow is made by joining together different processes. Each process can be written in any scripting language that can be executed by the Linux platform (Bash, Perl, Ruby, Python, etc.).\n\nProcesses are executed independently and are isolated from each other. The only way they can communicate is via “channels”, asynchronous first-in, first-out (FIFO) queues. In other words, every input and output of a process is represented as a channel. The interaction between these processes, and ultimately the workflow execution flow itself, is implicitly defined by these input and output declarations.",
-    "crumbs": [
-      "Channels"
-    ]
-  },
-  {
-    "objectID": "2_channels.html#nextflow-training-materials",
-    "href": "2_channels.html#nextflow-training-materials",
-    "title": "Nextflow intro",
-    "section": "",
-    "text": "Tip\n\n\n\nThere is a great community around nextflow, and tons of training material exist for all levels of experience with it. This workshop is heavily based on materials provided in those courses, assembled to my personal preferences. I sincerely encourage you to learn nextflow on your own using the materials available on the official nextflow training website.",
-    "crumbs": [
-      "Channels"
-    ]
-  },
-  {
-    "objectID": "1_intro.html#memory-threads",
-    "href": "1_intro.html#memory-threads",
+    "objectID": "1_intro.html#exercise-task1",
+    "href": "1_intro.html#exercise-task1",
     "title": "bash and containers",
-    "section": "memory, threads",
-    "text": "memory, threads\nIf we want to allocate different amount of memory and CPUs to each of the processes we make, we need to create separate bash scripts for each process, and define the threads and memory separately.",
-    "crumbs": [
-      "Introduction"
-    ]
-  },
-  {
-    "objectID": "1_intro.html#project-dependencies",
-    "href": "1_intro.html#project-dependencies",
-    "title": "bash and containers",
-    "section": "project dependencies",
-    "text": "project dependencies\nNext, we need to define dependencies - we will have to wait for one script to finish and then the other one can start running. This will depend on where we run the scripts - if we run it locally in bash, we can use wait; if we run it in slurm/pbs/torque, we need to take care of dependencies ourselves.",
-    "crumbs": [
-      "Introduction"
-    ]
-  },
-  {
-    "objectID": "1_intro.html#upscaling-to-production-level",
-    "href": "1_intro.html#upscaling-to-production-level",
-    "title": "bash and containers",
-    "section": "upscaling to production level",
-    "text": "upscaling to production level\nThe additional problems arise when you want to go to production-level, and run this pipeline on thousands of samples. You will want to use the cloud for this, and will need to implement the pipeline to work on the cloud.",
-    "crumbs": [
-      "Introduction"
-    ]
-  },
-  {
-    "objectID": "1_intro.html#parallelism",
-    "href": "1_intro.html#parallelism",
-    "title": "bash and containers",
-    "section": "parallelism",
-    "text": "parallelism\nWe need to take care of writing the bash “pipeline” to enable paralel execution. Also we need to take care of running the scripts in parallel on multiple samples.",
-    "crumbs": [
-      "Introduction"
-    ]
-  },
-  {
-    "objectID": "1_intro.html#resume",
-    "href": "1_intro.html#resume",
-    "title": "bash and containers",
-    "section": "resume",
-    "text": "resume\nWe need to take care of status of each of the runs. If some sample fails in one step, we need to find it manually to understand what and where failed.\nWe need to resume the execution of the pipeline manually when some step fails in some sample.",
-    "crumbs": [
-      "Introduction"
-    ]
-  },
-  {
-    "objectID": "1_intro.html#documentation",
-    "href": "1_intro.html#documentation",
-    "title": "bash and containers",
-    "section": "documentation",
-    "text": "documentation\nWe need to take care of the documentation. What samples were ran? How do we know if they all ran as expected? With which version of the code were they run? We need to keep track of that manually.",
+    "section": "💡 Exercise: task1",
+    "text": "💡 Exercise: task1\nTry it yourself! 1. Pull the container biocontainers/fastqc:v0.11.9_cv8 2. Use the fastqc on data/liver_1.fq",
     "crumbs": [
       "Introduction"
     ]
@@ -270,6 +130,16 @@
     ]
   },
   {
+    "objectID": "1_intro.html#memory-threads",
+    "href": "1_intro.html#memory-threads",
+    "title": "bash and containers",
+    "section": "memory, threads",
+    "text": "memory, threads\nIf we want to allocate different amount of memory and CPUs to each of the processes we make, we need to create separate bash scripts for each process, and define the threads and memory separately.",
+    "crumbs": [
+      "Introduction"
+    ]
+  },
+  {
     "objectID": "1_intro.html#process-dependencies",
     "href": "1_intro.html#process-dependencies",
     "title": "bash and containers",
@@ -280,33 +150,43 @@
     ]
   },
   {
-    "objectID": "2_channels.html#script-walkthrough",
-    "href": "2_channels.html#script-walkthrough",
-    "title": "Nextflow intro",
-    "section": "",
-    "text": "nextflow.enable.dsl=2 # (Domain-Specific Language version 2)\n\nprocess FASTQC {\n    \n  container 'biocontainers/fastqc:v0.11.9_cv8'\n\n  input:\n  path infilename\n\n  output:\n  path '*' \n      \n  script:\n  \"\"\"\n  fastqc ${infilename}  \n  \"\"\"\n}\n\nworkflow {\n\n  // parse input:\n  infile_channel = Channel.fromPath( \"../../data/liver_1.fq\" )\n\n  // run FASTQC:\n  FASTQC(infile_channel)\n\n}\n\n\nOf course, there is no need to hard code inputs to a channel. Some usual options for defining inputs can be:\nTo view a content of a channel, you can use method view() For example, we created code/script1.nf where we only created a channel from a file. To view it, just add .view() after a channel.\n\n# code/script1.nf\nworkflow {\n\n  // parse input:\n  infile_channel_1 = \n    Channel.fromPath( \"../../data/liver_*.fq\" )\n    .view()\n\n}\n\n\nWe did this in script1 . So lets run it and see what we get:\n\nnextflow run ../code/script1.nf    -c ../code/config.nf",
+    "objectID": "1_intro.html#parallelism",
+    "href": "1_intro.html#parallelism",
+    "title": "bash and containers",
+    "section": "parallelism",
+    "text": "parallelism\nWe need to take care of writing the bash “pipeline” to enable paralel execution. Also we need to take care of running the scripts in parallel on multiple samples.",
     "crumbs": [
-      "Channels"
+      "Introduction"
     ]
   },
   {
-    "objectID": "2_channels.html#exercise-add-a-trimming-step",
-    "href": "2_channels.html#exercise-add-a-trimming-step",
-    "title": "Nextflow intro",
-    "section": "",
-    "text": "docker run -v .:/data -it biocontainers/fastp:v0.20.1_cv1 fastp\n–in1 data/liver_1.fq\n–in2 data/liver_2.fq\n–out1 data/liver_1.trimmed.fq\n–out2 data/liver_2.trimmed.fq\n-h liver.html\n\n\nprocess FASTP {\n    \n  container 'biocontainers/fastp:v0.20.1_cv1'\n\n  input:\n  path infilename\n\n  output:\n  path '*' \n      \n  script:\n  \"\"\"\n  fastp \\\n    --in1 ${infilename} \n    --out1 liver_1.trimmed.fq \\\n    -h liver.html \n  \"\"\"\n}",
+    "objectID": "1_intro.html#resume",
+    "href": "1_intro.html#resume",
+    "title": "bash and containers",
+    "section": "resume",
+    "text": "resume\nWe need to take care of status of each of the runs. If some sample fails in one step, we need to find it manually to understand what and where failed.\nWe need to resume the execution of the pipeline manually when some step fails in some sample.",
     "crumbs": [
-      "Channels"
+      "Introduction"
     ]
   },
   {
-    "objectID": "2_channels.html#exercise-task2",
-    "href": "2_channels.html#exercise-task2",
-    "title": "Nextflow intro",
-    "section": "",
-    "text": "What will happen if you try to run the previous script with “../../data/liver_*.fq” instead of “../../data/liver_1.fq” also add infile_channel.view() . Try to run it yourself!",
+    "objectID": "1_intro.html#upscaling-to-production-level",
+    "href": "1_intro.html#upscaling-to-production-level",
+    "title": "bash and containers",
+    "section": "upscaling to production level",
+    "text": "upscaling to production level\nThe additional problems arise when you want to go to production-level, and run this pipeline on thousands of samples. You will want to use the cloud for this, and will need to implement the pipeline to work on the cloud.",
     "crumbs": [
-      "Channels"
+      "Introduction"
+    ]
+  },
+  {
+    "objectID": "1_intro.html#documentation",
+    "href": "1_intro.html#documentation",
+    "title": "bash and containers",
+    "section": "documentation",
+    "text": "documentation\nWe need to take care of the documentation. What samples were ran? How do we know if they all ran as expected? With which version of the code were they run? We need to keep track of that manually.",
+    "crumbs": [
+      "Introduction"
     ]
   }
 ]
