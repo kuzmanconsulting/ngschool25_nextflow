@@ -1,3 +1,15 @@
 ---
 title: "nf-core"  
 ---
+
+Ok, ok...
+
+I agree it got a bit tricky, yes.
+
+However, since all of this is so great and reproducible, there must be tons of people using it and creating reproducible scripts and best practice pipelines for everyone to run!
+
+Well!
+
+## What is nf-core
+
+![](images/paste-3.png)

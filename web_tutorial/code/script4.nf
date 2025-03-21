@@ -29,9 +29,8 @@ process TRIM {
   tuple val(sampleid),path(infiles)
   
   output:
+  path '*' 
   path '*trimmed.fq', emit: trimmed
-  tuple val(sampleid), path('*trimmed.fq'), emit: tup, optional: true
-
   publishDir params.outdir
 
   
@@ -61,28 +60,7 @@ process FASTQC_SINGLE {
   
   script:
   """
-  fastqc ${infile}
-  """
-}
-
-process MAP {
-    
-  container 'biocontainers/bwa:v0.7.17_cv1'
-  tag "$sampleid" // same approach works
-
-  input:
-  tuple val(sampleid),path(infiles) // same approach works
-  path transcriptome
-
-  output:
-  path '*' 
-  publishDir "${params.outdir}/mapped" // we create a subdirectory to keep it cleaner 
-
-  
-  script:
-  """
-  bwa index ${transcriptome} 
-  bwa mem ${transcriptome} ${infiles[0]} ${infiles[1]} -o ${sampleid}.sam
+  fastp ${infile}
   """
 }
 
@@ -95,6 +73,6 @@ workflow {
   // run FASTQC:
   FASTQC(infile_channel) 
   trimmed_channel = TRIM(infile_channel)
-  FASTQC_SINGLE(trimmed_channel.trimmed)
-  MAP(trimmed_channel.tup, params.transcriptome)
+  FASTQC_SINGLE(trimmed_channel.trimmed) 
+
 }
