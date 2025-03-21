@@ -2,6 +2,7 @@
 title: "bash and containers"  
 ---
 
+
 # Learning objectives
 
 By the end of this workshop you should be able to:
