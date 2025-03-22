@@ -29,6 +29,7 @@ Processes are executed independently and are isolated from each other. The only 
 First nextflow script : code/my_first_script.nf 
 
 ```{r}
+cd web_tutorial
 mkdir tests
 cd tests
 
