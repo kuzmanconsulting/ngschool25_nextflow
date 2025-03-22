@@ -85,7 +85,7 @@ nextflow run ../code/script4.nf  -c ../code/config.nf -resume --infile "../../da
 ::: callout-warning
 ## 💡 Solution: Fix the pipeline!
 
-```{bash}
+```{r}
 #| code-fold: true
 
 #If you run 
@@ -124,7 +124,11 @@ Add the following to the script and view the outputed channel!
 
 ```
 
-Lets use it to create and run a new process which will do the mapping to the transcriptome!
+
+... if there is time... 
+
+
+Lets use it to create and run a new process which will do the mapping to the transcriptome! 
 
 ( Because we can! ) For example, use the container `biocontainers/bwa:v0.7.17_cv1` (save it as script5.nf).
 

@@ -46,30 +46,43 @@ process TRIM {
 
   """
 }
+process FASTQC_SINGLE {
+    
+  container 'biocontainers/fastqc:v0.11.9_cv8'
+  tag "$sampleid"
+
+  input:
+  path infile
+  
+  output:
+  path '*html' 
+  publishDir params.outdir
+
+  
+  script:
+  """
+  fastqc ${infile}
+  """
+}
 
 process MAP {
     
-  // use appropriate container:  
-
-  // add tag - on sampleid
+  container 'biocontainers/bwa:v0.7.17_cv1'
+  tag "$sampleid" // same approach works
 
   input:
-  // input tuple same as in TRIM
-  // another input is transcriptome file, which is a constant value 
-  // (needs to be passed as a absolute path from the workflow)
+  tuple val(sampleid),path(infiles) // same approach works
   path transcriptome
 
   output:
   path '*' 
-  // add publishDir to be provided by outdir, subfolder mapped
- 
+  publishDir "${params.outdir}/mapped" // we create a subdirectory to keep it cleaner 
+
   
   script:
   """
-  # index the transcriptome file
-
-  # call bwa mem transcriptome, read1, read2 -o sampleid.sam
-
+  bwa index ${transcriptome} 
+  bwa mem ${transcriptome} ${infiles[0]} ${infiles[1]} -o ${sampleid}.sam
   """
 }
 
@@ -83,6 +96,5 @@ workflow {
   FASTQC(infile_channel) 
   trimmed_channel = TRIM(infile_channel)
   FASTQC_SINGLE(trimmed_channel.trimmed)
-  // call MAP process on trimmed reads:  
-
+  MAP(trimmed_channel.tup, params.transcriptome)
 }

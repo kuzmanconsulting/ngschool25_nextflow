@@ -101,7 +101,7 @@ nextflow run ../code/script1.nf
 
 There are two types of channels in nextflow:
 
-**queue channels** and **value channels. Queue channels** are expendable, they can only be used once - like when you pipe data in bash. Once used, they vanish. Most channels in nextflow are queue channels. Value channels are long-lived and can be re-used. They usually hold constant values (or absolute paths).
+**queue channels** and **value channels. Queue channels** are expendable, they can only be used once - like when you pipe data in bash. Once used, elements in this queue cannot be re-used. Most channels in nextflow are queue channels. Value channels are long-lived and can be re-used, but they always only hold a single value. They usually hold constant values (or absolute paths).
 
 There are many ways to create a channel in nextflow, I advise you to look at [the official documentation on channel factories](https://www.nextflow.io/docs/latest/reference/channel.html#channel-factory) for more information.
 
@@ -116,7 +116,6 @@ Results are saved in working directory, two layers down. There, .html and .zip f
 :::
 
 ```{bash, eval=FALSE, task2}
-cp ../code/my_first_script.nf ../code/script2.nf
 # change ../code/script2.nf and run it.
 # 1. change liver_1.fq to *fq 
 # add .view() to view output of the input channel!
