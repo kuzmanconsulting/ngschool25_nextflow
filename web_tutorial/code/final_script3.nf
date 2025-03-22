@@ -25,6 +25,7 @@ workflow {
 
   // parse input:
   infile_channel = Channel.fromFilePairs( params.infile )
+                          .view()
   FASTQC(infile_channel)
-  
+      .view()
 }

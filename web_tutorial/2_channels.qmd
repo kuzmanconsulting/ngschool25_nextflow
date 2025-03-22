@@ -283,7 +283,7 @@ This way only the steps we change will be ran again, the rest will be found in c
 
 ... So far so good?
 
-### input as a parameter.
+### params.
 
 Of course, you don't need to hard code the path, you can use variable that will store a path of the file/files you want to input.
 
@@ -345,35 +345,28 @@ nextflow run ../code/script3.nf -resume --infile "../../data/*{1,2}.fq"
 
 ```
 
-This creates a channel which is a tuple of two elements. First one is the sample ID, and second one is a list of two elements, which are paths to file_1.fq and file_2.fq.
+When using fromFilePairs we need to specify file pairs to input. `*{1,2}.fq` means the input will be all pairs of files ending with _1.fq and _2.fq and everything before that will be considered sample id.
+
+This creates a channel with 3 elements each of which are a tuple of two elements. First one is the sample ID, and second one is a list of two elements, which are paths to file_1.fq and file_2.fq.
 
 It is easy to access the individual elements, you can do it in the following way:
 
 In the process, it is easy to parse this, just instead of `path infilename` use:
 
 ```{bash}
-# process
-input:
 tuple val(sampleid),path(infiles)
-
-# workflow, add:
-FASTQC(infile_channel)
-      .view()
-
-# run with: 
-nextflow run ../code/script3.nf -resume --infile "../../data/*{1,2}.fq"
-
 ```
 
 Now we can access individual file from infiles with `${infiles[0]} ${infiles[1]}`, and we know the sampleid, it is saved as variable `${sampleid}`.
 
 Another neat thing you can do is to tag the process execution by some name, lets see this by using "tag":
 
-```{nextflow}
+```{bash}
+# process
 process FASTQC {
     
   container 'biocontainers/fastqc:v0.11.9_cv8'
-**  tag "running on $sampleid" **
+  tag "running on $sampleid" 
 
   input:
   tuple val(sampleid),path(infiles)
@@ -389,9 +382,21 @@ process FASTQC {
   """
 }
 
+
+# workflow, add:
+FASTQC(infile_channel)
+      .view()
+
+# run with: 
+nextflow run ../code/script3.nf --infile "../../data/*{1,2}.fq" -ansi-log false
+
 ```
 
+# Try it out!  
+## script4.nf
+
 OK, cool! We are ready for some exercise!!
+
 
 ::: callout-exercise
 ## 💡 Exercise: Add outdir parameter!
@@ -437,12 +442,16 @@ nextflow run ../code/script3.nf  -c ../code/config.nf -resume --infile "../../da
 ```
 :::
 
+
+
+
+
 ::: callout-exercise
 ## 💡 Exercise: Add a trimming step!
 
 OK, we are ready for a bigger bite!
 
-Create a new process, TRIM that will trim the fastq files as we did before: Use appropriate variables as needed!
+Create a new process, TRIM that will trim the fastq files BEFORE the FASTQ step, as we did before with bash: Use appropriate variables as needed!
 
 Remember, we used the container: `'biocontainers/fastp:v0.20.1_cv1'`.
 
@@ -477,8 +486,7 @@ process TRIM {
   tuple val(sampleid),path(infiles)
   
   output:
-  path '*' 
-  publishDir params.outdir
+  path '*trimmed.fq', emit: trimmed 
 
   
   script:
@@ -499,8 +507,7 @@ workflow {
   infile_channel = Channel.fromFilePairs( params.infile )
                     .view()
   // run FASTQC:
-  FASTQC(infile_channel) 
-  trimmed_channel = TRIM(infile_channel).out
+  trimmed_channel = TRIM(infile_channel).trimmed
   FASTQC(trimmed_channel) 
 
 }
@@ -512,7 +519,7 @@ Running it :
 ```{bash, eval=FALSE, solution-task4b}
 #| code-fold: true
 
-nextflow run ../code/script3.nf  -c ../code/config.nf -resume --infile "../../data/*{1,2}.fq" --outdir tryme 
+nextflow run ../code/script3.nf  -resume --infile "../../data/*{1,2}.fq" --outdir tryme -asi-log false
 
 ```
 :::
@@ -520,7 +527,7 @@ nextflow run ../code/script3.nf  -c ../code/config.nf -resume --infile "../../da
 ::: callout-exercise
 ## 💡 Exercise: Add a new FASTQC_SINGLE step!
 
-If you want extra work, create additional process, FASTQC_SINGLE. Change pthe parameters of FASTQC to be able to input and process only a single file. Run that process on the output of TRIM step.
+If you want extra work, create additional process, FASTQC_SINGLE. Change the parameters of FASTQC to be able to input and process only a single file. Run that process on the output of TRIM step.
 :::
 
 ::: callout-warning
@@ -568,181 +575,8 @@ Running it :
 ```{bash, eval=FALSE, solution-task5b}
 #| code-fold: true
 
-nextflow run ../code/script3.nf  -c ../code/config.nf -resume --infile "../../data/*{1,2}.fq" --outdir tryme 
+nextflow run ../code/script4.nf  -c ../code/config.nf -resume --infile "../../data/*{1,2}.fq" 
 
 ```
 :::
 
-## Logging
-
-Want to see something quite cool?
-
-Every nextflow run automatically loggs all of its progress. The main log from, the last run is always saved as .nextflow.log. Check it out!
-
-```{bash}
-cat .nextflow.log  
-
-```
-
-There are many information, most useful might be seeing per process status:
-
-```{bash}
-cat .nextflow.log | grep COMPLETED  
-
-```
-
-Whatever is completed successfully has the exit status 0. So if you grep everything which does not have exit status 0 you will find all failed processes:
-
-```{bash}
- cat .nextflow.log | grep COMPLETED | grep -v "exit: 0"
-```
-
-Just adding flags -with-report -with-dag -with-timeline -with-trace enable reporrts on the pipeline generated automatically.
-
-If you also want to see all the processes being ran, you can add -ansi-log false
-
-```{bash}
-run ../code/script3.nf  -c ../code/config.nf -resume --infile "../../data/*{1,2}.fq" --outdir tryme -with-report -with-dag -with-timeline -with-trace -ansi-log false
-```
-
-### Timeline
-
-![](images/paste-1.png)
-
-### DAG
-
-![](images/paste-2.png){width="271"}
-
-Nextflow automatically draws a graph of the workflow!
-
-### Report
-
-Nextflow tracks all progress for each run! You can easily get information on how much CPUs or memory was actually used in a process, and get a lot of additional details on where the processes were run.
-
-#### Process work dir
-
-Every process working directory is available. Check one in the report and enter it. In there, you have :
-
-::: {.callout-note appearance="simple"}
-## Important files
-
-**.command.run**: File that sets the stage. It configures the containers and prepares the environment to run the process.
-
-**.command.sh**: The actual script being run. If you need to change something, best way is to change the .sh and run with .command.run
-
-**.command.err**: Errors outputted by the process.
-
-**.command.log**: Log outputted by the process.
-
-**.command.out**: Any standard output outputted by the process.
-
-**.exitcode**: If 0, everything is ok.
-:::
-
-::: callout-exercise
-## 💡 Exercise: Fix a broken pipeline! 💔
-
-( This might be the most useful exercise of all.. )
-:::
-
-::: callout-exercise
-Run the following code and fix it .
-
-```{bash}
-
-nextflow run ../code/script4.nf  -c ../code/config.nf -resume --infile "../../data/*{1,2}.fq" --outdir tryme -with-report -with-dag -with-timeline -with-trace
-```
-:::
-
-::: callout-warning
-## 💡 Solution: Fix the pipeline!
-
-```{bash}
-#| code-fold: true
-
-#If you run 
-
-cat .nextflow.log | grep COMPLETED | grep -v "exit: 0"
-
-#Or check the execution report, you will find which working directory was problematic.  
-#In there, you can check out .command.err and see that fastp command wasnt found. 
-# We were supposed to do fastqc in this step, so no wonder. 
-# change the fastp to fastqc in the .command.sh, and run the .command.run to verify the problem is solved.
-
-sed -i "" "s|fastp|fastqc|g" .command.sh
-# change permission to be able to run .command.run
-
-chmod +x .command.run
-./.command.run
-
-#Works! 
-
-#now change in the original pipeline and run with -resume!
-
-```
-:::
-
-::: callout-tip
-## Getting tricky
-
-In the same way that input can be tuple, also we can output (emit a channel) that is made of tuples !
-
-So, lets try it!\
-Add the following to the script and view the outputed channel!
-
-```{bash}
-
-  tuple val(sampleid), path('*trimmed.fq'), emit: tup, optional: true
-
-```
-
-Lets use it to create and run a new process which will do the mapping to the transcriptome!
-
-( Because we can! ) For example, use the container `biocontainers/bwa:v0.7.17_cv1` (save it as script5.nf).
-
-```{bash}
-
-process MAP {
-    
-  container 'biocontainers/bwa:v0.7.17_cv1'
-  tag "$sampleid" // same approach works
-
-  input:
-  tuple val(sampleid),path(infiles) // same approach works
-  path transcriptome
-
-  output:
-  path '*' 
-  publishDir "${params.outdir}/mapped" // we create a subdirectory to keep it cleaner 
-
-  
-  script:
-  """
-  bwa index ${transcriptome} 
-  bwa mem ${transcriptome} ${infiles[0]} ${infiles[1]} -o ${sampleid}.sam
-  """
-}
-
-
-workflow {
-
-  // parse input:
-  infile_channel = Channel.fromFilePairs( params.infile )
-                    .view()
-  // run FASTQC:
-  FASTQC(infile_channel) 
-  trimmed_channel = TRIM(infile_channel)
-  FASTQC_SINGLE(trimmed_channel.trimmed)
-  MAP(trimmed_channel.tup, params.transcriptome)
-}
-
-```
-:::
-
-BUT! It needs to be run with a full path!\
-so:
-
-```{bash}
-rp=`realpath ../../data/transcriptome.fa`
-nextflow run ../code/script3.nf  -c ../code/config.nf -resume --infile "../../data/*{1,2}.fq" --outdir res --transcriptome $rp
-```

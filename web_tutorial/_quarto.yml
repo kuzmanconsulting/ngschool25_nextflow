@@ -11,9 +11,9 @@ website:
       - href: 1_intro.qmd
         text: Introduction
       - href: 2_channels.qmd
-        text: Channels
-      - href: 3_process.qmd
-        text: Process
+        text: "Nextflow intro"
+      - href: 3_logs.qmd
+        text: Logs
       - href: 4_nf-core.qmd
         text: nf-core
   page-navigation: true

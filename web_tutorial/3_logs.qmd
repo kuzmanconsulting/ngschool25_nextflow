@@ -1,0 +1,176 @@
+---
+title: "Logs"  
+---
+
+
+Want to see something quite cool?
+
+Every nextflow run automatically loggs all of its progress. The main log from, the last run is always saved as .nextflow.log. Check it out!
+
+```{bash}
+cat .nextflow.log  
+
+```
+
+There are many information, most useful might be seeing per process status:
+
+```{bash}
+cat .nextflow.log | grep COMPLETED  
+
+```
+
+Whatever is completed successfully has the exit status 0. So if you grep everything which does not have exit status 0 you will find all failed processes:
+
+```{bash}
+ cat .nextflow.log | grep COMPLETED | grep -v "exit: 0"
+```
+
+Just adding flags -with-report -with-dag -with-timeline -with-trace enable reporrts on the pipeline generated automatically.
+
+If you also want to see all the processes being ran, you can add -ansi-log false
+
+```{bash}
+run ../code/script3.nf  -c ../code/config.nf -resume --infile "../../data/*{1,2}.fq" --outdir tryme -with-report -with-dag -with-timeline -with-trace -ansi-log false
+```
+
+### Timeline
+
+![](images/paste-1.png)
+
+### DAG
+
+![](images/paste-2.png){width="271"}
+
+Nextflow automatically draws a graph of the workflow!
+
+### Report
+
+Nextflow tracks all progress for each run! You can easily get information on how much CPUs or memory was actually used in a process, and get a lot of additional details on where the processes were run.
+
+#### Process work dir
+
+Every process working directory is available. Check one in the report and enter it. In there, you have :
+
+::: {.callout-note appearance="simple"}
+## Important files
+
+**.command.run**: File that sets the stage. It configures the containers and prepares the environment to run the process.
+
+**.command.sh**: The actual script being run. If you need to change something, best way is to change the .sh and run with .command.run
+
+**.command.err**: Errors outputted by the process.
+
+**.command.log**: Log outputted by the process.
+
+**.command.out**: Any standard output outputted by the process.
+
+**.exitcode**: If 0, everything is ok.
+:::
+
+::: callout-exercise
+## 💡 Exercise: Fix a broken pipeline! 💔
+
+( This might be the most useful exercise of all.. )
+:::
+
+::: callout-exercise
+Run the following code and fix it .
+
+```{bash}
+
+nextflow run ../code/script4.nf  -c ../code/config.nf -resume --infile "../../data/*{1,2}.fq" --outdir tryme -with-report -with-dag -with-timeline -with-trace
+```
+:::
+
+::: callout-warning
+## 💡 Solution: Fix the pipeline!
+
+```{bash}
+#| code-fold: true
+
+#If you run 
+
+cat .nextflow.log | grep COMPLETED | grep -v "exit: 0"
+
+#Or check the execution report, you will find which working directory was problematic.  
+#In there, you can check out .command.err and see that fastp command wasnt found. 
+# We were supposed to do fastqc in this step, so no wonder. 
+# change the fastp to fastqc in the .command.sh, and run the .command.run to verify the problem is solved.
+
+sed -i "" "s|fastp|fastqc|g" .command.sh
+# change permission to be able to run .command.run
+
+chmod +x .command.run
+./.command.run
+
+#Works! 
+
+#now change in the original pipeline and run with -resume!
+
+```
+:::
+
+::: callout-tip
+## Getting tricky
+
+In the same way that input can be tuple, also we can output (emit a channel) that is made of tuples !
+
+So, lets try it!\
+Add the following to the script and view the outputed channel!
+
+```{bash}
+
+  tuple val(sampleid), path('*trimmed.fq'), emit: tup, optional: true
+
+```
+
+Lets use it to create and run a new process which will do the mapping to the transcriptome!
+
+( Because we can! ) For example, use the container `biocontainers/bwa:v0.7.17_cv1` (save it as script5.nf).
+
+```{bash}
+
+process MAP {
+    
+  container 'biocontainers/bwa:v0.7.17_cv1'
+  tag "$sampleid" // same approach works
+
+  input:
+  tuple val(sampleid),path(infiles) // same approach works
+  path transcriptome
+
+  output:
+  path '*' 
+  publishDir "${params.outdir}/mapped" // we create a subdirectory to keep it cleaner 
+
+  
+  script:
+  """
+  bwa index ${transcriptome} 
+  bwa mem ${transcriptome} ${infiles[0]} ${infiles[1]} -o ${sampleid}.sam
+  """
+}
+
+
+workflow {
+
+  // parse input:
+  infile_channel = Channel.fromFilePairs( params.infile )
+                    .view()
+  // run FASTQC:
+  FASTQC(infile_channel) 
+  trimmed_channel = TRIM(infile_channel)
+  FASTQC_SINGLE(trimmed_channel.trimmed)
+  MAP(trimmed_channel.tup, params.transcriptome)
+}
+
+```
+:::
+
+BUT! It needs to be run with a full path!\
+so:
+
+```{bash}
+rp=`realpath ../../data/transcriptome.fa`
+nextflow run ../code/script3.nf  -c ../code/config.nf -resume --infile "../../data/*{1,2}.fq" --outdir res --transcriptome $rp
+```
