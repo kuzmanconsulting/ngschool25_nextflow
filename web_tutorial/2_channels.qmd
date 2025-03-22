@@ -75,7 +75,6 @@ workflow {
 
 ```
 
-
 To view a content of a channel, you can use the operator view() For example, we created code/script1.nf where we only created a channel from a file. To view it, just add .view() after a channel.
 
 ```{nextflow}
@@ -97,53 +96,72 @@ We did this in [script1](code/script1.nf) . So lets run it and see what we get:
 nextflow run ../code/script1.nf 
 ```
 
+
+### Note on channels
+
+There are two types of channels in nextflow:
+
+**queue channels** and **value channels. Queue channels** are expendable, they can only be used once - like when you pipe data in bash. Once used, they vanish. Most channels in nextflow are queue channels. Value channels are long-lived and can be re-used. They usually hold constant values (or absolute paths).
+
+There are many ways to create a channel in nextflow, I advise you to look at [the official documentation on channel factories](https://www.nextflow.io/docs/latest/reference/channel.html#channel-factory) for more information.
+
+
 ::: callout-exercise
+Results are saved in working directory, two layers down. There, .html and .zip files are created.
+
 ## 💡 Exercise: task2
 
-What will happen if you try to run the previous my_first_script.nf with "../../data/liver\_\*.fq" instead of "../../data/liver_1.fq" also add infile_channel.view() . Try to run it yourself!
+1.  change script2.nf to: write `liver_*.fq` instead of `liver_1.fq` and view the infile_channel.
+2.  when process is ran, the outputs are also gathered into a channel. In other words, FASTQC(infile_channel) is also a channel. View the elements in it!
 :::
 
 ```{bash, eval=FALSE, task2}
 cp ../code/my_first_script.nf ../code/script2.nf
 # change ../code/script2.nf and run it.
 # 1. change liver_1.fq to *fq 
-# add .view() to view output of the channel!
+# add .view() to view output of the input channel!
 
+# run the script:  
 nextflow run ../code/script2.nf  
+
+# view the outfile channel and run the script again
+
 
 ```
 
-::: callout-warning
+
+
+:::: callout-warning
 ## 💡 Solution:
 
 ```{bash, eval=FALSE, solution-task2}
 #| code-fold: true
 
+workflow {
 
-cp ../code/my_first_script.nf ../code/script2.nf
-# change ../code/script2.nf and run it.
-sed  -i 's|../../data/liver_1.fq" )|../../data/liver_*.fq" ).view()|g' ../code/script2.nf
+  // parse input:
+  infile_channel = Channel.fromPath( "../../data/liver_*.fq" )
+                      .view()
+  // run FASTQC:
+  FASTQC(infile_channel)
+    .view()
+
+}
 
 nextflow run ../code/script2.nf  
 
 ```
 
-Note: if you add -ansi-log false to nextflow run command, you will see all the processes instead of single process per line!  
+::: callout-tip
+If you add -ansi-log false to nextflow run command, you will see all the processes instead of single process per line!
 
-```{bash}
+``` bash
 nextflow run ../code/script2.nf  -ansi-log false
-
 ```
 
-:::
-
-
-
 Now fastqc is ran 2 times!
-
-::: callout-tip
-There are many ways to create a channel in nextflow, I advise you to look at [the official documentation on channel factories](https://www.nextflow.io/docs/latest/reference/channel.html#channel-factory) for more information.
 :::
+::::
 
 ### publishDir
 
@@ -152,24 +170,105 @@ Now we created multiple files as results, but they are all somewhere around in t
 Add the following line to the process:
 
 ```{bash}
+#process:
   publishDir "results"
 
+#run in bash: 
+nextflow run ../code/script2.nf  
 ```
+
+Now the results (liver_1_fastqc.html liver_1_fastqc.zip liver_2_fastqc.html liver_2_fastqc.zip) will be saved in the folder: `results/` liver_1_fastqc.html liver_1_fastqc.zip liver_2_fastqc.html liver_2_fastqc.zip
+
+### output channels
 
 If you want to collect only html files, you can specify this in the output by :
 
 ```{bash}
-  output "*html"
-
+#process: 
+  output:
+  path "*html"
+ 
+# bash:
+#remove the results folder and run the script again:  
+rm -rf results
+nextflow run ../code/script2.nf  
 ```
 
-Actually, the process call creates a channel of outputs! 
+Now the fastqc process only outputs the html files in the channel, and only they are in the results folder.
 
-To view the output channel, just call view in it, as a normal channel, like this:  
+We have seen already that output is a channel. If we want to direct different outputs into different channels, this can be easily done by specifying where the output will be directed to - using the **emit** keyword.
+
 
 ```{bash}
-  FASTQC(infile_channel).view() 
+#in process:  
+
+  output :
+  path "*html"
+  path "*zip", emit: zip
+
 ```
+
+::: {.callout-warning}
+This will produce an error:  
+```{bash}
+
+# in workflow: 
+  FASTQC(infile_channel).view()
+
+# in bash:
+# remove the results folder and run again:
+rm -rf results
+nextflow run ../code/script2.nf  
+```
+
+Output produces 2 channels, and nextflow doesnt know which one we want. You should specify which one you are interestred in by choosing .html or .zip. 
+So, do this:  
+
+```{bash}
+
+# in workflow: 
+  FASTQC(infile_channel).zip.view()
+
+# in bash:
+# remove the results folder and run again:
+rm -rf results
+nextflow run ../code/script2.nf  
+```
+
+
+:::
+
+:::::: {.callout-note}
+## output VS emit  
+
+1. **output:**  Note - when you specify output, all the files which are there are expected to exist and are going to be in the final result folder. If some file is not produced, nextflow will give an error. This can be circumvented by using the argumant optional: true.  
+
+2. **emit: name** - emit will direct those outputs into a channel named PROCESS.name .  
+
+:::
+
+
+::: callout-note
+Note that in a similar way in which channels are expendable, so are processes. If you use a process once, it is no longer usable later. Each time you call a process, you use it. So if you want to save an output of a process to two different channels, save it to a channel, then access the different channels within it by calling the emit name (eg `out_channel.html` and `out_channel.zip` )
+:::
+
+
+
+```{bash}
+
+# in workflow: 
+  out_channel = FASTQC(infile_channel)
+  println ("out_html: ") 
+  out_channel.html.view()
+ // println ("out_zip: ") 
+ // out_channel.zip.view()
+
+# in bash:
+# remove the results folder and run again:
+rm -rf results
+nextflow run ../code/script2.nf  
+```
+  
 
 ### -resume.
 
@@ -180,7 +279,9 @@ We have now repeated the fastqc computation a lot of times already. There is a n
 nextflow run ../code/script2.nf  -resume
 ```
 
-This way only the steps we change will be ran again, the rest will be found in cache.
+This way only the steps we change will be ran again, the rest will be found in cache!!
+
+... So far so good?
 
 ### input as a parameter.
 
@@ -196,7 +297,7 @@ in the workflow, you can simply replace the actual file path with a parameter de
 
 ```
 
-Neat thing about this is that you can define the parameter directly when you call the nextflow run:
+By using the special word **params**. nextflow will look at the parameters which were provided when the run was executed. Neat thing about this is that you can define the parameter directly when you call the nextflow run:
 
 ::: callout-tip
 to define a parameter while callling a nextflow run, simply use double dash: '`--`' followed by the name of the parameter.
@@ -206,7 +307,6 @@ for example, to specify a `param.infile` in workflow, we would need to call
 `nextflow run --infile "path/to/file"` .
 
 Alternatively, you can create a config file and store your parameters there! - neat for keeping track of runs!
-
 :::
 
 \
@@ -218,22 +318,23 @@ nextflow run ../code/script2.nf -resume --infile "../../data/*fq"
 
 ```
 
+## script3.nf
+
 ### fromFilePairs
 
 There are many ways to input a file to channel. In bioinformatics, there is often a need to input pairs of files. So, in nextflow there is a special operator for this **fromFilePairs** .
 
-Lets try this out in script 3:
-Open and change script3:
+Lets try this out in script 3: Open and change script3:
 
 ```{bash}
 
-workflow {
+# workflow {
 
   // parse input:
   infile_channel = Channel.fromFilePairs( params.infile )
                     .view()
  
-}
+
 ```
 
 and call it with:
@@ -244,15 +345,23 @@ nextflow run ../code/script3.nf -resume --infile "../../data/*{1,2}.fq"
 
 ```
 
-This creates a channel which is a tuple of two elements. First one is the sample ID, and second one is another tuple of two elements, which are paths to file_1.fq and file_2.fq.
+This creates a channel which is a tuple of two elements. First one is the sample ID, and second one is a list of two elements, which are paths to file_1.fq and file_2.fq.
 
 It is easy to access the individual elements, you can do it in the following way:
 
 In the process, it is easy to parse this, just instead of `path infilename` use:
 
 ```{bash}
-
+# process
+input:
 tuple val(sampleid),path(infiles)
+
+# workflow, add:
+FASTQC(infile_channel)
+      .view()
+
+# run with: 
+nextflow run ../code/script3.nf -resume --infile "../../data/*{1,2}.fq"
 
 ```
 
@@ -475,19 +584,18 @@ cat .nextflow.log
 
 ```
 
-There are many information, most useful might be seeing per process status: 
+There are many information, most useful might be seeing per process status:
 
 ```{bash}
 cat .nextflow.log | grep COMPLETED  
 
 ```
 
-Whatever is completed successfully has the exit status 0. So if you grep everything which does not have exit status 0 you will find all failed processes: 
+Whatever is completed successfully has the exit status 0. So if you grep everything which does not have exit status 0 you will find all failed processes:
 
 ```{bash}
  cat .nextflow.log | grep COMPLETED | grep -v "exit: 0"
 ```
-
 
 Just adding flags -with-report -with-dag -with-timeline -with-trace enable reporrts on the pipeline generated automatically.
 
@@ -496,7 +604,6 @@ If you also want to see all the processes being ran, you can add -ansi-log false
 ```{bash}
 run ../code/script3.nf  -c ../code/config.nf -resume --infile "../../data/*{1,2}.fq" --outdir tryme -with-report -with-dag -with-timeline -with-trace -ansi-log false
 ```
-
 
 ### Timeline
 
@@ -545,13 +652,11 @@ Run the following code and fix it .
 
 nextflow run ../code/script4.nf  -c ../code/config.nf -resume --infile "../../data/*{1,2}.fq" --outdir tryme -with-report -with-dag -with-timeline -with-trace
 ```
-
-
 :::
 
-
 ::: callout-warning
-## 💡 Solution: Fix the pipeline!  
+## 💡 Solution: Fix the pipeline!
+
 ```{bash}
 #| code-fold: true
 
@@ -575,19 +680,15 @@ chmod +x .command.run
 #now change in the original pipeline and run with -resume!
 
 ```
-
-
-
 :::
 
+::: callout-tip
+## Getting tricky
 
+In the same way that input can be tuple, also we can output (emit a channel) that is made of tuples !
 
-::: {.callout-tip}
-## Getting tricky    
-In the same way that input can be tuple, also we can output (emit a channel) that is made of tuples !  
-
-So, lets try it!  
-Add the following to the script and view the outputed channel!  
+So, lets try it!\
+Add the following to the script and view the outputed channel!
 
 ```{bash}
 
@@ -595,11 +696,11 @@ Add the following to the script and view the outputed channel!
 
 ```
 
-Lets use it to create and run a new process which will do the mapping to the transcriptome!  
+Lets use it to create and run a new process which will do the mapping to the transcriptome!
 
-( Because we can! ) For example, use the container `biocontainers/bwa:v0.7.17_cv1`  (save it as script5.nf).
+( Because we can! ) For example, use the container `biocontainers/bwa:v0.7.17_cv1` (save it as script5.nf).
 
-```{bash} 
+```{bash}
 
 process MAP {
     
@@ -636,14 +737,12 @@ workflow {
 }
 
 ```
-
 :::
 
-BUT! It needs to be run with a full path!  
-so: 
+BUT! It needs to be run with a full path!\
+so:
 
 ```{bash}
 rp=`realpath ../../data/transcriptome.fa`
 nextflow run ../code/script3.nf  -c ../code/config.nf -resume --infile "../../data/*{1,2}.fq" --outdir res --transcriptome $rp
 ```
-
