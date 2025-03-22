@@ -40,7 +40,7 @@ nextflow run ../code/my_first_script.nf
 ### Explanation:
 
 **`nextflow run code/my_first_script.nf`** runs a nextflow script code/my_first_script.nf\
-**`-c config.nf`** uses configuration file for nextflow run. Parameters which are nextflow-related are handed with a single dash.
+Parameters which are nextflow-related are handed with a single dash.
 :::
 
 ## Script walkthrough
@@ -75,6 +75,9 @@ workflow {
 }
 
 ```
+
+
+## script1.nf
 
 To view a content of a channel, you can use the operator view() For example, we created code/script1.nf where we only created a channel from a file. To view it, just add .view() after a channel.
 
