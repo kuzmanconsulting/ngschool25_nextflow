@@ -2,6 +2,16 @@
 title: "bash and containers"  
 ---
 
+## Question:
+
+1.  nextflow
+
+2.  bash script
+
+3.  R
+
+4.  python
+
 # Learning objectives
 
 By the end of this workshop you should be able to:
@@ -69,7 +79,7 @@ Next, enter the container image:
 
 docker run -v .:/data -it biocontainers/fastp:v0.20.1_cv1 /bin/bash
 
-# exit the container with exit
+
 ```
 
 ::: {.callout-note appearance="minimal"}
@@ -174,7 +184,7 @@ docker run -v .:/data -it biocontainers/fastp:v0.20.1_cv1 fastp \
 docker run -v .:/data -it biocontainers/fastqc:v0.11.9_cv8 fastqc data/liver_1.fq 
 ```
 
-# Problems with bash scripts:  
+# Problems with bash scripts:
 
 ## output locations
 

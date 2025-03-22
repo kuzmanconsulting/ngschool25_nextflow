@@ -26,7 +26,7 @@ Processes are executed independently and are isolated from each other. The only 
 
 ## My first nextflow script
 
-[First nextflow script](code/my_first_script.nf)
+First nextflow script : code/my_first_script.nf 
 
 ```{r}
 mkdir tests
